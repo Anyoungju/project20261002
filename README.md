@@ -67,8 +67,8 @@ deploy/      pm2 설정 · 배포 안내
 ### 2. 설치
 
 ```bash
-git clone https://github.com/sukwonji77-svg/project261002.git
-cd project261002
+git clone https://github.com/Anyoungju/project20261002.git
+cd project20261002
 cd backend  && npm install && cd ..
 cd frontend && npm install && cd ..
 npx --prefix frontend playwright install chromium   # E2E 용 (1회)
