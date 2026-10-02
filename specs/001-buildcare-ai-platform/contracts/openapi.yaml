@@ -1,0 +1,1810 @@
+openapi: 3.1.0
+info:
+  title: Buildcare AI API
+  version: 0.1.0
+  description: |
+    Buildcare AI 백엔드 REST 계약. 근거: specs/001-buildcare-ai-platform/spec.md (FR-xxx),
+    Design/SD_01 (P0~P8, G0~G10), Design/SD_02 (S1~S8B), Design/buildcare_ddl.sql.
+
+    공통 규칙
+    - 인증: httpOnly 쿠키 `bc_session`(JWT). 비회원은 `bc_device` 쿠키. 상태 변경 요청은 `X-CSRF-Token` 필요.
+    - 게이트 미통과는 항상 `GateBlock` 본문으로 응답한다(FR-004). 문구는 gate_def.block_message 와 같다.
+      HTTP 상태: G0 미로그인 401 · G0 권한 없음 403 · G1 402 · G2 402 · G3 422 · G5 422 · G4 502 · G6 409 · G7 200(blocked 필드) · G8 409 · G9 409 · G10 409
+    - 결제·분석 요청·기록 저장·요청 확정은 `Idempotency-Key` 헤더를 받는다(중복 제출 방지).
+    - 개인정보는 마스킹 필드만 반환한다(FR-090).
+servers:
+  - url: http://localhost:3000
+    description: 로컬 개발 백엔드
+security:
+  - sessionCookie: []
+
+tags:
+  - name: auth
+  - name: reference
+  - name: entitlement
+    description: P1 · S1 분석 이용권 구매 (UC2)
+  - name: analysis
+    description: P2 · S2 하자 사진 AI 분석 (UC1)
+  - name: case
+  - name: building
+    description: C8 · P5 · S5 건물 이력 (UC5)
+  - name: record
+    description: P3 · S3 현장 점검·보수 기록 (UC3)
+  - name: verification
+    description: P4 · S4 전문가 검증 (UC4)
+  - name: schedule
+    description: P7 · P0 · S7A · S7B 정기점검 (UC6)
+  - name: priority
+    description: P6 · S6 유지관리 우선순위 (UC8)
+  - name: expert
+    description: P8 · S8A · S8B 전문가 점검 연결 (UC7)
+  - name: notification
+  - name: admin
+
+paths:
+  # ---------------------------------------------------------------- auth
+  /api/auth/login:
+    post:
+      tags: [auth]
+      security: []
+      summary: 이메일·비밀번호 로그인
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+      responses:
+        '200':
+          description: 로그인 성공. 세션 쿠키 발급. 이 기기에 연결 가능한 비회원 분석이 있으면 guestLinkable=true
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Me'
+                  - type: object
+                    properties:
+                      guestLinkable: { type: boolean }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/auth/logout:
+    post:
+      tags: [auth]
+      summary: 로그아웃
+      responses:
+        '204': { description: 세션 쿠키 삭제 }
+  /api/auth/me:
+    get:
+      tags: [auth]
+      security: [{ sessionCookie: [] }, { deviceCookie: [] }]
+      summary: 현재 사용자(비회원 포함)와 역할·메뉴
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+          description: OK
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/auth/link-guest:
+    post:
+      tags: [auth]
+      summary: 이 기기의 비회원 분석 결과를 계정에 연결 (FR-120a)
+      responses:
+        '200':
+          description: 연결 완료
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  linkedCaseCount: { type: integer }
+                  freeTrialRemaining: { type: integer, nullable: true }
+
+  # ---------------------------------------------------------------- reference
+  /api/gates:
+    get:
+      tags: [reference]
+      security: []
+      summary: 게이트 정의 (차단 문구 단일 원천)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/GateDef' }
+  /api/codes:
+    get:
+      tags: [reference]
+      security: []
+      summary: 하자 종류·건물 유형·전문 분야·점검 주기 코드
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  defectTypes: { type: array, items: { $ref: '#/components/schemas/Code' } }
+                  buildingTypes: { type: array, items: { $ref: '#/components/schemas/Code' } }
+                  specialties: { type: array, items: { $ref: '#/components/schemas/Code' } }
+                  cycles: { type: array, items: { $ref: '#/components/schemas/Code' } }
+
+  # ---------------------------------------------------------------- entitlement (S1)
+  /api/plans:
+    get:
+      tags: [entitlement]
+      security: []
+      summary: 요금제 목록 (금액 미설정이면 purchasable=false)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Plan' }
+  /api/me/entitlements:
+    get:
+      tags: [entitlement]
+      security: [{ sessionCookie: [] }, { deviceCookie: [] }]
+      summary: 이용권 잔여·무료 체험 상태·분석 가능 여부 (v_entitlement_balance · v_analysis_eligibility)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EntitlementStatus' }
+  /api/payments:
+    post:
+      tags: [entitlement]
+      summary: 결제 시작 (로그인 필수 — G0)
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planCode]
+              properties:
+                planCode: { type: string, enum: [per_analysis, monthly] }
+                returnTo: { type: string, description: 결제 후 복귀 경로 (FR-023) }
+      responses:
+        '201':
+          description: 결제 요청 생성. checkoutUrl 로 PG 이동(Mock 은 즉시 확인 가능)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  paymentId: { type: integer }
+                  amount: { type: number }
+                  checkoutUrl: { type: string }
+        '401': { $ref: '#/components/responses/Gate' }
+        '409':
+          description: 요금 미설정 요금제
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Problem' }
+  /api/payments/{paymentId}/confirm:
+    post:
+      tags: [entitlement]
+      summary: PG 승인 확인 → 이용권 부여 (G1)
+      parameters:
+        - $ref: '#/components/parameters/PaymentId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pgToken: { type: string }
+      responses:
+        '200':
+          description: 승인 — 이용권 부여
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entitlementId: { type: integer }
+                  returnTo: { type: string }
+        '402': { $ref: '#/components/responses/Gate' }
+  /api/payments/webhook:
+    post:
+      tags: [entitlement]
+      security: []
+      summary: PG 웹훅 (서명 검증)
+      responses:
+        '204': { description: 처리됨 }
+
+  # ---------------------------------------------------------------- analysis (S2)
+  /api/analysis-requests:
+    post:
+      tags: [analysis]
+      security: [{ sessionCookie: [] }, { deviceCookie: [] }]
+      summary: 하자 사진 분석 요청 (G2 → G3 → 비동기 AI 분석)
+      description: 비회원이면 기기 쿠키를 발급/사용한다(FR-120). buildingId 는 시설관리자 기록 권한 건물일 때만 허용.
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [photos]
+              properties:
+                photos:
+                  type: array
+                  minItems: 1
+                  maxItems: 10
+                  items: { type: string, format: binary }
+                description: { type: string, maxLength: 500 }
+                caseId: { type: integer, description: 실패 후 같은 건으로 재요청 시 }
+                buildingId: { type: integer }
+      responses:
+        '202':
+          description: 분석 시작(analyzing). 폴링으로 결과 확인
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AnalysisRequest' }
+        '402': { $ref: '#/components/responses/Gate' }
+        '422': { $ref: '#/components/responses/Gate' }
+  /api/analysis-requests/{requestId}:
+    get:
+      tags: [analysis]
+      security: [{ sessionCookie: [] }, { deviceCookie: [] }]
+      summary: 분석 상태·결과 (고지·위험 권고 포함)
+      parameters: [{ $ref: '#/components/parameters/RequestId' }]
+      responses:
+        '200':
+          description: OK. status=failed 이면 gate(G4) 포함
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AnalysisRequest' }
+        '403': { $ref: '#/components/responses/Gate' }
+  /api/analysis-requests/{requestId}/retry:
+    post:
+      tags: [analysis]
+      security: [{ sessionCookie: [] }, { deviceCookie: [] }]
+      summary: G4 실패 후 다시 분석 요청 (같은 건·같은 사진, 새 요청)
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '202':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AnalysisRequest' }
+          description: 재분석 시작
+        '402': { $ref: '#/components/responses/Gate' }
+
+  # ---------------------------------------------------------------- case
+  /api/cases/{caseId}:
+    get:
+      tags: [case]
+      summary: 하자 건 요약 C6 (사진·설명·AI 결과·현장 기록·판정)
+      parameters: [{ $ref: '#/components/parameters/CaseId' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CaseSummary' }
+        '403': { $ref: '#/components/responses/Gate' }
+  /api/cases/{caseId}/progress:
+    get:
+      tags: [case]
+      summary: 하자 건 진행 레일 C1 (v_case_progress)
+      parameters: [{ $ref: '#/components/parameters/CaseId' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CaseRail' }
+  /api/photos/{kind}/{photoId}/url:
+    get:
+      tags: [case]
+      security: [{ sessionCookie: [] }, { deviceCookie: [] }]
+      summary: 권한 확인 후 만료 5분 서명 URL 발급 (FR-091)
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema: { type: string, enum: [analysis, record] }
+        - name: photoId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url: { type: string }
+                  expiresAt: { type: string, format: date-time }
+                  alt: { type: string, description: '하자 종류 - 위치 - 촬영일 (FR-101)' }
+        '403': { $ref: '#/components/responses/Gate' }
+
+  # ---------------------------------------------------------------- building (C8 · S5)
+  /api/buildings:
+    get:
+      tags: [building]
+      summary: 권한 범위 건물 목록 C8 (v_access_check)
+      parameters:
+        - name: access
+          in: query
+          schema: { type: string, enum: [record, manage] }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/BuildingSummary' }
+  /api/buildings/{buildingId}/rail:
+    get:
+      tags: [building]
+      summary: 건물 레일 (이력·지연·연결 대기 건수 — v_building_rail)
+      parameters: [{ $ref: '#/components/parameters/BuildingId' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BuildingRail' }
+        '403': { $ref: '#/components/responses/Gate' }
+  /api/buildings/{buildingId}/history:
+    get:
+      tags: [building]
+      summary: 시간순 통합 이력 (v_building_history) — 조회 전용 (FR-055)
+      parameters:
+        - $ref: '#/components/parameters/BuildingId'
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+        - { name: defectType, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: OK. 연동 실패 시 sourceStatus.externalIncluded=false (FR-052)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sourceStatus: { $ref: '#/components/schemas/SourceStatus' }
+                  entries:
+                    type: array
+                    items: { $ref: '#/components/schemas/HistoryEntry' }
+        '403': { $ref: '#/components/responses/Gate' }
+  /api/buildings/{buildingId}/repeat-defects:
+    get:
+      tags: [building]
+      summary: 반복 하자 패턴 (v_repeat_defect, G7 = v_pattern_gate)
+      parameters: [{ $ref: '#/components/parameters/BuildingId' }]
+      responses:
+        '200':
+          description: G7 미통과면 blocked 에 GateBlock, patterns 는 빈 배열
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  blocked:
+                    oneOf:
+                      - $ref: '#/components/schemas/GateBlock'
+                      - type: 'null'
+                  patterns:
+                    type: array
+                    items: { $ref: '#/components/schemas/RepeatPattern' }
+  /api/buildings/{buildingId}/bms-sync:
+    post:
+      tags: [building]
+      summary: 건물관리시스템 동기화 수동 실행 (bms_sync_run)
+      parameters: [{ $ref: '#/components/parameters/BuildingId' }]
+      responses:
+        '200':
+          description: 결과(ok/failed)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SourceStatus' }
+  /api/permission-requests:
+    post:
+      tags: [building]
+      summary: G0 [권한 요청 보내기] (FR-003)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [requestedScreen]
+              properties:
+                buildingId: { type: integer }
+                orgId: { type: integer }
+                requestedScreen: { type: string, enum: [S3, S4, S5, S6, S7A, S7B, S8A, S8B] }
+      responses:
+        '201': { description: 요청 기록 }
+
+  # ---------------------------------------------------------------- record (S3)
+  /api/records:
+    post:
+      tags: [record]
+      summary: 현장 기록 시작 (draft). resultId 를 주면 사진·원인·대응방안 프리필 (FR-031)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [buildingId]
+              properties:
+                buildingId: { type: integer }
+                resultId: { type: integer, nullable: true }
+                scheduleId: { type: integer, nullable: true, description: 배정 점검에서 시작한 경우 }
+      responses:
+        '201':
+          description: draft 생성
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InspectionRecord' }
+        '403': { $ref: '#/components/responses/Gate' }
+  /api/records/{recordId}:
+    get:
+      tags: [record]
+      summary: 기록 조회
+      parameters: [{ $ref: '#/components/parameters/RecordId' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InspectionRecord' }
+    patch:
+      tags: [record]
+      summary: draft 항목 수정 (임시 저장)
+      parameters: [{ $ref: '#/components/parameters/RecordId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RecordFields' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InspectionRecord' }
+        '409':
+          description: 저장된 기록은 repairStatus 외 수정 불가
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Problem' }
+  /api/records/{recordId}/photos:
+    post:
+      tags: [record]
+      summary: 현장 사진 추가 (열린 추가 자료 요청 자동 해소 — FR-044)
+      parameters: [{ $ref: '#/components/parameters/RecordId' }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [photos]
+              properties:
+                photos:
+                  type: array
+                  items: { type: string, format: binary }
+      responses:
+        '201':
+          description: 저장된 사진 id 목록
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  photoIds: { type: array, items: { type: integer } }
+                  dataRequestResolved: { type: boolean }
+        '502':
+          description: 사진 저장 실패 — 텍스트는 draft 로 남음 (FR-035)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Problem' }
+  /api/records/{recordId}/save:
+    post:
+      tags: [record]
+      summary: 기록 저장 (draft → saved). G5 필수 항목·사진 1장 이상
+      parameters:
+        - $ref: '#/components/parameters/RecordId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: 저장 완료. mismatch 면 verificationItemId 포함 (FR-036)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/InspectionRecord'
+                  - type: object
+                    properties:
+                      verificationItemId: { type: integer, nullable: true }
+                      completedScheduleId: { type: integer, nullable: true }
+        '422':
+          description: G5 — missingFields 포함
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GateBlock' }
+  /api/records/{recordId}/repair-status:
+    patch:
+      tags: [record]
+      summary: 저장된 기록의 보수 결과 갱신 (FR-034, record_repair_log)
+      parameters: [{ $ref: '#/components/parameters/RecordId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [repairStatus]
+              properties:
+                repairStatus: { type: string, enum: [completed, pending] }
+                repairMethod: { type: string, maxLength: 200 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InspectionRecord' }
+
+  # ---------------------------------------------------------------- verification (S4)
+  /api/verification-items:
+    get:
+      tags: [verification]
+      summary: 검증 대기 목록 (v_verification_queue) — 전문가
+      parameters:
+        - { name: defectType, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/VerificationQueueItem' }
+        '403': { $ref: '#/components/responses/Gate' }
+  /api/verification-items/{itemId}:
+    get:
+      tags: [verification]
+      summary: 검증 상세 — 비교 검토 + 판정 판본 이력 (FR-040 · FR-042)
+      parameters: [{ $ref: '#/components/parameters/ItemId' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  item: { $ref: '#/components/schemas/VerificationQueueItem' }
+                  case: { $ref: '#/components/schemas/CaseSummary' }
+                  verdicts: { type: array, items: { $ref: '#/components/schemas/Verdict' } }
+                  openDataRequest:
+                    oneOf:
+                      - $ref: '#/components/schemas/DataRequest'
+                      - type: 'null'
+  /api/verification-items/{itemId}/verdicts:
+    post:
+      tags: [verification]
+      summary: 판정 저장 (새 판본). 열린 자료 요청이 있으면 G6
+      parameters:
+        - $ref: '#/components/parameters/ItemId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [verdict]
+              properties:
+                verdict: { type: string, enum: [match, mismatch] }
+                opinion: { type: string, maxLength: 1000 }
+                diffNote: { type: string, maxLength: 500, description: mismatch 면 필수 }
+                riskHigh: { type: boolean, default: false }
+      responses:
+        '201':
+          description: 저장 — riskHigh 면 riskNoticeId 포함 (FR-046)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Verdict'
+                  - type: object
+                    properties:
+                      riskNoticeId: { type: integer, nullable: true }
+        '409': { $ref: '#/components/responses/Gate' }
+        '422':
+          description: mismatch 인데 diffNote 없음
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Problem' }
+  /api/verification-items/{itemId}/data-requests:
+    post:
+      tags: [verification]
+      summary: 판정 불가 → 추가 자료 요청 (G6, FR-043). 작성 시설관리자에게 전달
+      parameters: [{ $ref: '#/components/parameters/ItemId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, maxLength: 200 }
+      responses:
+        '201':
+          description: 요청 발송
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataRequest' }
+  /api/trust-metrics:
+    get:
+      tags: [verification]
+      summary: AI 신뢰도 지표 (v_ai_trust_metric — 판정 불가 제외)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    defectType: { type: string }
+                    verdictCount: { type: integer }
+                    mismatchCount: { type: integer }
+                    matchRate: { type: number }
+
+  # ---------------------------------------------------------------- schedule (S7A · S7B)
+  /api/buildings/{buildingId}/schedules:
+    get:
+      tags: [schedule]
+      summary: 정기점검 일정과 표시 상태 (v_schedule_status)
+      parameters: [{ $ref: '#/components/parameters/BuildingId' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Schedule' }
+    post:
+      tags: [schedule]
+      summary: 일정 생성·배정 (배정 통지 — FR-071)
+      parameters: [{ $ref: '#/components/parameters/BuildingId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemText, assigneeId, dueDate]
+              properties:
+                itemText: { type: string, maxLength: 200 }
+                cycleCode: { type: string, enum: [monthly, quarterly, semiannual, annual], nullable: true }
+                assigneeId: { type: integer }
+                dueDate: { type: string, format: date }
+                basisPattern:
+                  description: 반복 하자 근거로 항목 추가 시 (FR-070)
+                  type: object
+                  properties:
+                    locationText: { type: string }
+                    defectType: { type: string }
+      responses:
+        '201':
+          description: 생성
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Schedule' }
+  /api/schedules/{scheduleId}:
+    patch:
+      tags: [schedule]
+      summary: 일정 수정 (scheduled 만)
+      parameters: [{ $ref: '#/components/parameters/ScheduleId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                itemText: { type: string }
+                cycleCode: { type: string, nullable: true }
+                assigneeId: { type: integer }
+                dueDate: { type: string, format: date }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Schedule' }
+  /api/schedules/{scheduleId}/cancel:
+    post:
+      tags: [schedule]
+      summary: 일정 취소 — 이후 알림 없음 (FR-074)
+      parameters: [{ $ref: '#/components/parameters/ScheduleId' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Schedule' }
+  /api/schedules/{scheduleId}/complete:
+    post:
+      tags: [schedule]
+      summary: 같은 건물의 저장 기록을 연결해 완료 (FR-073). 기록에 위험 표시가 있으면 위험 통지 생성 (FR-076)
+      parameters: [{ $ref: '#/components/parameters/ScheduleId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [recordId]
+              properties:
+                recordId: { type: integer }
+      responses:
+        '200':
+          description: 완료
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Schedule'
+                  - type: object
+                    properties:
+                      riskNoticeId: { type: integer, nullable: true }
+        '422':
+          description: 다른 건물·저장 안 된 기록·이미 다른 일정의 근거
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Problem' }
+  /api/me/assignments:
+    get:
+      tags: [schedule]
+      summary: S7B 내 배정 점검 — 배정·도래·지연 + 추가 자료 요청 (FR-075)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rail:
+                    type: object
+                    properties:
+                      assigned: { type: integer }
+                      overdue: { type: integer }
+                      dataRequests: { type: integer }
+                  schedules: { type: array, items: { $ref: '#/components/schemas/Schedule' } }
+                  dataRequests: { type: array, items: { $ref: '#/components/schemas/DataRequest' } }
+
+  # ---------------------------------------------------------------- priority (S6)
+  /api/org/dashboard:
+    get:
+      tags: [priority]
+      summary: 기업 관리 건물 요약 (라이선스 만료 시 G0 — 403)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orgName: { type: string }
+                  licenseExpiresOn: { type: string, format: date, nullable: true }
+                  buildings: { type: array, items: { $ref: '#/components/schemas/BuildingRail' } }
+        '403': { $ref: '#/components/responses/Gate' }
+  /api/priority-runs:
+    post:
+      tags: [priority]
+      summary: 우선순위 산출 → 스냅숏 저장 (FR-061 · FR-065)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [buildingIds, from, to]
+              properties:
+                buildingIds: { type: array, items: { type: integer }, minItems: 1 }
+                from: { type: string, format: date }
+                to: { type: string, format: date }
+      responses:
+        '201':
+          description: 산출 완료
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PriorityRun' }
+  /api/priority-runs/{runId}:
+    get:
+      tags: [priority]
+      summary: 산출 스냅숏 조회 (재계산 없음)
+      parameters: [{ $ref: '#/components/parameters/RunId' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PriorityRun' }
+  /api/priority-runs/{runId}/items/{rank}:
+    patch:
+      tags: [priority]
+      summary: 순위 항목 조치 지정 (FR-066)
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+        - name: rank
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action: { type: string, enum: [inspection, expert, none] }
+      responses:
+        '200':
+          description: 지정 완료. 이동할 화면 경로 포함
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  next: { type: string, nullable: true, description: '/buildings/{id}/schedules/new?... 또는 /expert-requests/new?...' }
+
+  # ---------------------------------------------------------------- expert (S8A · S8B)
+  /api/risk-notices:
+    get:
+      tags: [expert]
+      summary: 열린 위험 통지 (전문가 연결 진입점 — FR-016)
+      parameters:
+        - { name: buildingId, in: query, schema: { type: integer } }
+        - { name: open, in: query, schema: { type: boolean, default: true } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/RiskNotice' }
+  /api/risk-notices/{riskNoticeId}/dismiss:
+    post:
+      tags: [expert]
+      summary: 조치 없음 종료 (close_reason=dismissed)
+      parameters:
+        - name: riskNoticeId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: 종료 }
+  /api/expert-requests:
+    post:
+      tags: [expert]
+      summary: 전문가 점검 요청 생성 — 건물관리자만 (FR-080 · FR-121)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [caseId, buildingId, originKind, specialtyCode, wishFrom, wishTo]
+              properties:
+                caseId: { type: integer }
+                buildingId: { type: integer }
+                originKind: { type: string, enum: [analysis, verdict, inspection, history, priority, direct] }
+                riskNoticeId: { type: integer, nullable: true }
+                specialtyCode: { type: string, enum: [architecture, structure, waterproof] }
+                wishFrom: { type: string, format: date }
+                wishTo: { type: string, format: date }
+      responses:
+        '201':
+          description: 생성(drafting)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExpertRequest' }
+        '403': { $ref: '#/components/responses/Gate' }
+  /api/expert-requests/{expReqId}:
+    get:
+      tags: [expert]
+      summary: 요청 상세 (상태 = v_expert_request_status)
+      parameters: [{ $ref: '#/components/parameters/ExpReqId' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExpertRequest' }
+    patch:
+      tags: [expert]
+      summary: 조건 바꾸기(분야·희망 기간) — G8 해제 행동. 수락 대기·확정 후에는 409
+      parameters: [{ name: expReqId, in: path, required: true, schema: { type: integer } }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, properties: { specialtyCode: { type: string }, wishFrom: { type: string, format: date }, wishTo: { type: string, format: date } } } } } }
+      responses: { '200': { description: OK }, '409': { description: 잠긴 요청 } }
+  /api/expert-requests/{expReqId}/candidates:
+    get:
+      tags: [expert]
+      summary: 전문가 후보 (분야·가능일, 마스킹). 없으면 G8
+      parameters: [{ $ref: '#/components/parameters/ExpReqId' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ExpertCandidate' }
+        '409': { $ref: '#/components/responses/Gate' }
+  /api/expert-requests/{expReqId}/preview:
+    get:
+      tags: [expert]
+      summary: 확정 전 고지 — 수수료·공유 범위 (FR-082, C4 변형)
+      parameters:
+        - $ref: '#/components/parameters/ExpReqId'
+        - { name: expertId, in: query, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  feeAmount: { type: number, nullable: true, description: 요율 미설정이면 null }
+                  scopeText: { type: string }
+                  notice: { $ref: '#/components/schemas/Notice' }
+  /api/expert-requests/{expReqId}/confirm:
+    post:
+      tags: [expert]
+      summary: 공유 동의 + 요청 확정 → 시도 1건 발송 (G9). 동의는 이 전문가 1명에게만 유효 (FR-083)
+      parameters:
+        - $ref: '#/components/parameters/ExpReqId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [expertId, consent, noticeId, scopeText]
+              properties:
+                expertId: { type: integer }
+                consent: { type: boolean, description: false 면 G9 }
+                noticeId: { type: integer, description: 화면에 표시된 고지 판본 }
+                scopeText: { type: string, maxLength: 500 }
+      responses:
+        '201':
+          description: 발송(awaiting)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  consentId: { type: integer }
+                  attemptId: { type: integer }
+        '409': { $ref: '#/components/responses/Gate' }
+  /api/me/expert-attempts:
+    get:
+      tags: [expert]
+      summary: S8B 받은 점검 요청 (전문가)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ExpertAttempt' }
+  /api/expert-attempts/{attemptId}:
+    get:
+      tags: [expert]
+      summary: 동의된 범위의 하자 자료만 (FR-084)
+      parameters: [{ $ref: '#/components/parameters/AttemptId' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ExpertAttempt'
+                  - type: object
+                    properties:
+                      sharedCase: { $ref: '#/components/schemas/CaseSummary' }
+  /api/expert-attempts/{attemptId}/respond:
+    post:
+      tags: [expert]
+      summary: 수락 → 연결 확정·수수료 기록·위험 통지 종료 / 거절 (G10)
+      parameters: [{ $ref: '#/components/parameters/AttemptId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [response]
+              properties:
+                response: { type: string, enum: [accepted, declined] }
+                declineReason: { type: string, maxLength: 200 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  connectionId: { type: integer, nullable: true }
+                  feeAmount: { type: number, nullable: true }
+        '409':
+          description: 이미 응답했거나 무응답 처리된 시도
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Problem' }
+
+  # ---------------------------------------------------------------- notification
+  /api/me/notifications:
+    get:
+      tags: [notification]
+      summary: 서비스 내 알림
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Notification' }
+  /api/me/notifications/{notifId}/read:
+    post:
+      tags: [notification]
+      parameters:
+        - name: notifId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '204': { description: 읽음 처리 }
+
+  # ---------------------------------------------------------------- admin
+  /api/admin/constants:
+    get:
+      tags: [admin]
+      summary: 운영 기준값 목록 (FR-110)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Constant' }
+  /api/admin/constants/{key}:
+    put:
+      tags: [admin]
+      summary: 운영 기준값 설정 (null = 보수적 동작)
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                value: { type: string, nullable: true }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Constant' }
+  /api/admin/notices:
+    post:
+      tags: [admin]
+      summary: 고지 문구 새 판본 (기존 결과는 당시 판본 유지 — FR-018)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kind, body]
+              properties:
+                kind: { type: string, enum: [analysis, priority, share] }
+                body: { type: string, maxLength: 1000 }
+      responses:
+        '201':
+          description: 생성
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Notice' }
+  /api/admin/permission-requests/{permReqId}:
+    post:
+      tags: [admin]
+      summary: 권한 요청 처리 (기업 관리자 — 자기 조직 건물 / 운영자)
+      parameters:
+        - name: permReqId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [resolution]
+              properties:
+                resolution: { type: string, enum: [granted, rejected] }
+                accessKind: { type: string, enum: [record, manage] }
+      responses:
+        '200': { description: 처리 완료 }
+
+  # ---------------------------------------------------------------- 구현 단계 추가 (2026-10-03, research R22 RBAC 포함)
+  /api/auth/csrf:
+    get:
+      tags: [auth]
+      security: []
+      summary: CSRF 이중 제출 토큰 발급(bc_csrf 쿠키 + 본문)
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: object, properties: { token: { type: string } } } } } }
+  /api/auth/password:
+    post:
+      tags: [auth]
+      summary: 비밀번호 변경 (token_version+1 — 다른 세션 즉시 무효)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [currentPassword, newPassword], properties: { currentPassword: { type: string }, newPassword: { type: string, minLength: 10 } } } } }
+      responses:
+        '200': { description: 변경됨 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { description: 비밀번호 정책 위반 }
+  /api/me/cases:
+    get:
+      tags: [analysis]
+      summary: 내 하자 건 목록 (S2 이력)
+      responses: { '200': { description: OK } }
+  /api/notices/current:
+    get:
+      tags: [reference]
+      security: []
+      summary: 현재 고지 판본(analysis·priority·share)
+      responses: { '200': { description: OK } }
+  /api/payments/{paymentId}:
+    get:
+      tags: [entitlement]
+      summary: 결제 상태 (거절이면 gate=G1)
+      parameters: [{ name: paymentId, in: path, required: true, schema: { type: integer } }]
+      responses: { '200': { description: OK } }
+  /api/buildings/{buildingId}:
+    get:
+      tags: [building]
+      summary: 건물 정보(유형 읽기 전용 표시용)
+      parameters: [{ name: buildingId, in: path, required: true, schema: { type: integer } }]
+      responses: { '200': { description: OK }, '403': { $ref: '#/components/responses/Gate' } }
+  /api/buildings/{buildingId}/history/{kind}/{sourceId}:
+    get:
+      tags: [building]
+      summary: 이력 항목 상세(사진·AI 결과+고지·판정·보수 결과) — 읽기 전용
+      parameters:
+        - { name: buildingId, in: path, required: true, schema: { type: integer } }
+        - { name: kind, in: path, required: true, schema: { type: string, enum: [ai_analysis, field_record, expert_verdict, expert_connection, external] } }
+        - { name: sourceId, in: path, required: true, schema: { type: integer } }
+      responses: { '200': { description: OK } }
+  /api/records/linkable-results:
+    get:
+      tags: [record]
+      summary: 기록에 연결 가능한 분석 결과(비회원 미연결 결과 제외 — FR-120b)
+      parameters: [{ name: buildingId, in: query, required: true, schema: { type: integer } }]
+      responses: { '200': { description: OK } }
+  /api/admin/users:
+    get:
+      tags: [admin]
+      summary: 계정 목록(마스킹) — 운영자 전체 · 기업 관리자 소속 조직
+      parameters:
+        - { name: role, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string, enum: [active, disabled] } }
+        - { name: q, in: query, schema: { type: string } }
+      responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AdminUser' } } } } } }
+    post:
+      tags: [admin]
+      summary: 계정 생성 — 임시 비밀번호 1회 반환, 첫 로그인 시 변경 강제
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [email, displayName, roles], properties: { email: { type: string, format: email }, displayName: { type: string }, phone: { type: string, nullable: true }, orgId: { type: integer, nullable: true }, roles: { type: array, items: { type: string } } } } } }
+      responses: { '201': { description: 생성 } }
+  /api/admin/users/{userId}:
+    get:
+      tags: [admin]
+      parameters: [{ name: userId, in: path, required: true, schema: { type: integer } }]
+      responses: { '200': { description: OK } }
+    patch:
+      tags: [admin]
+      summary: 비활성화/재활성화 (token_version+1)
+      parameters: [{ name: userId, in: path, required: true, schema: { type: integer } }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, properties: { disabled: { type: boolean } } } } } }
+      responses: { '200': { description: OK } }
+  /api/admin/users/{userId}/roles:
+    put:
+      tags: [admin]
+      summary: 역할 설정(업무 5종 + operator) — 마지막 운영자 보호, 세션 즉시 무효화
+      parameters: [{ name: userId, in: path, required: true, schema: { type: integer } }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/RoleAssignment' } } } }
+      responses: { '200': { description: OK }, '409': { description: 마지막 운영자 } }
+  /api/admin/users/{userId}/reset-password:
+    post:
+      tags: [admin]
+      parameters: [{ name: userId, in: path, required: true, schema: { type: integer } }]
+      responses: { '200': { description: 임시 비밀번호 1회 반환 } }
+  /api/admin/users/{userId}/building-access:
+    post:
+      tags: [admin]
+      summary: 건물 권한 부여 — 운영자 전체, 기업 관리자 소속 조직 건물만
+      parameters: [{ name: userId, in: path, required: true, schema: { type: integer } }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/BuildingAccessGrant' } } } }
+      responses: { '201': { description: OK }, '403': { description: 조직 밖 건물 } }
+    delete:
+      tags: [admin]
+      parameters:
+        - { name: userId, in: path, required: true, schema: { type: integer } }
+        - { name: buildingId, in: query, required: true, schema: { type: integer } }
+        - { name: accessKind, in: query, required: true, schema: { type: string, enum: [record, manage] } }
+      responses: { '200': { description: OK } }
+  /api/admin/permission-requests:
+    get:
+      tags: [admin]
+      parameters: [{ name: status, in: query, schema: { type: string, enum: [pending, all] } }]
+      responses: { '200': { description: OK } }
+  /api/admin/rbac/matrix:
+    get:
+      tags: [admin]
+      summary: 역할 × 권한 매트릭스
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/RbacMatrix' } } } } }
+  /api/admin/rbac/roles/{role}/permissions:
+    put:
+      tags: [admin]
+      summary: 역할 권한 변경(운영자) — 잠금 권한은 운영자에게서 제거 불가
+      parameters: [{ name: role, in: path, required: true, schema: { type: string } }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, properties: { permissions: { type: array, items: { type: string } } } } } } }
+      responses: { '200': { description: OK }, '409': { description: 잠금 권한 } }
+  /api/admin/audit-log:
+    get:
+      tags: [admin]
+      responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AuditEntry' } } } } } }
+  /api/admin/gate-events:
+    get:
+      tags: [admin]
+      summary: 게이트 발생·해제 이력 (FR-007)
+      responses: { '200': { description: OK } }
+  /api/admin/scope:
+    get:
+      tags: [admin]
+      summary: 관리 범위의 조직·건물
+      responses: { '200': { description: OK } }
+  /api/admin/plans/{planCode}/price:
+    put:
+      tags: [admin]
+      summary: 요금제 금액 설정(NULL = 미설정, 결제 불가)
+      parameters: [{ name: planCode, in: path, required: true, schema: { type: string } }]
+      responses: { '200': { description: OK } }
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: bc_session
+    deviceCookie:
+      type: apiKey
+      in: cookie
+      name: bc_device
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema: { type: string, maxLength: 64 }
+    PaymentId: { name: paymentId, in: path, required: true, schema: { type: integer } }
+    RequestId: { name: requestId, in: path, required: true, schema: { type: integer } }
+    CaseId: { name: caseId, in: path, required: true, schema: { type: integer } }
+    BuildingId: { name: buildingId, in: path, required: true, schema: { type: integer } }
+    RecordId: { name: recordId, in: path, required: true, schema: { type: integer } }
+    ItemId: { name: itemId, in: path, required: true, schema: { type: integer } }
+    ScheduleId: { name: scheduleId, in: path, required: true, schema: { type: integer } }
+    RunId: { name: runId, in: path, required: true, schema: { type: integer } }
+    ExpReqId: { name: expReqId, in: path, required: true, schema: { type: integer } }
+    AttemptId: { name: attemptId, in: path, required: true, schema: { type: integer } }
+
+  responses:
+    Gate:
+      description: 게이트 미통과 — C2 차단 블록으로 표시
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/GateBlock' }
+    Unauthorized:
+      description: G0 미로그인 — 로그인 후 같은 화면 복귀
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/GateBlock' }
+
+  schemas:
+    Problem:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string }
+        detail: { type: string }
+        retryable: { type: boolean }
+
+    GateBlock:
+      type: object
+      description: FR-004~FR-007. message 는 gate_def.block_message 와 동일
+      required: [gate, message, releaseParty, actions]
+      properties:
+        gate: { type: string, enum: [G0, G1, G2, G3, G4, G5, G6, G7, G8, G9, G10] }
+        message: { type: string }
+        reason: { type: string, description: 구체 사유 (예 '사진이 흐립니다') }
+        releaseParty: { type: string }
+        selfRelease: { type: boolean, description: false 면 «요청 보내기» 행동만 (FR-006) }
+        actions:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string, example: retry-upload }
+              label: { type: string, example: 사진 다시 올리기 }
+              href: { type: string }
+        missingFields:
+          type: array
+          items: { type: string, enum: [location, defectType, repairStatus, aiMatch, photo] }
+        gateEventId: { type: integer }
+
+    GateDef:
+      type: object
+      properties:
+        gateCode: { type: string }
+        gateName: { type: string }
+        blockMessage: { type: string }
+        releaseParty: { type: string }
+
+    Code:
+      type: object
+      properties:
+        code: { type: string }
+        name: { type: string }
+
+    Me:
+      type: object
+      properties:
+        userId: { type: integer }
+        isGuest: { type: boolean }
+        nameMasked: { type: string }
+        emailMasked: { type: string }
+        roles:
+          type: array
+          items: { type: string, enum: [guest, general, facility, building, enterprise, expert, operator] }
+        permissions:
+          type: array
+          description: research R22 — 화면·버튼 판단에 쓰는 권한 코드(backend/src/auth/permissions.ts)
+          items: { type: string }
+        mustChangePassword: { type: boolean }
+        orgId: { type: integer, nullable: true }
+        menu:
+          type: array
+          items: { type: string, enum: [S1, S2, S3, S4, S5, S6, S7A, S7B, S8A, S8B, ADMIN] }
+
+    Plan:
+      type: object
+      properties:
+        planCode: { type: string, enum: [per_analysis, monthly] }
+        planName: { type: string }
+        priceAmount: { type: number, nullable: true }
+        analysisQuota: { type: integer, nullable: true }
+        periodMonths: { type: integer, nullable: true }
+        purchasable: { type: boolean }
+
+    EntitlementStatus:
+      type: object
+      properties:
+        eligible: { type: boolean }
+        freeTrialRemaining: { type: integer, nullable: true }
+        entitlements:
+          type: array
+          items:
+            type: object
+            properties:
+              entitlementId: { type: integer }
+              kind: { type: string, enum: [free_trial, per_analysis, monthly] }
+              remaining: { type: integer, nullable: true }
+              validUntil: { type: string, format: date-time, nullable: true }
+              usable: { type: boolean }
+        gate:
+          oneOf:
+            - $ref: '#/components/schemas/GateBlock'
+            - type: 'null'
+
+    Notice:
+      type: object
+      properties:
+        noticeId: { type: integer }
+        kind: { type: string, enum: [analysis, priority, share] }
+        body: { type: string }
+        effectiveFrom: { type: string, format: date-time }
+
+    AnalysisRequest:
+      type: object
+      properties:
+        requestId: { type: integer }
+        caseId: { type: integer }
+        caseNo: { type: string, example: D-2026-0142 }
+        status: { type: string, enum: [received, quality_rejected, analyzing, failed, completed] }
+        consecutiveFailures: { type: integer }
+        gate:
+          oneOf:
+            - $ref: '#/components/schemas/GateBlock'
+            - type: 'null'
+        result:
+          oneOf:
+            - $ref: '#/components/schemas/AnalysisResult'
+            - type: 'null'
+
+    AnalysisResult:
+      type: object
+      description: notice 는 항상 존재 (FR-014). recommendation 은 caution/danger 일 때 (FR-015)
+      required: [resultId, riskLevel, causes, actions, notice]
+      properties:
+        resultId: { type: integer }
+        riskLevel: { type: string, enum: [normal, caution, danger] }
+        aiConfidence: { type: number, nullable: true }
+        causes:
+          type: array
+          items:
+            type: object
+            properties:
+              rank: { type: integer }
+              text: { type: string }
+        actions:
+          type: array
+          items:
+            type: object
+            properties:
+              seq: { type: integer }
+              text: { type: string }
+        notice: { $ref: '#/components/schemas/Notice' }
+        recommendation:
+          type: object
+          nullable: true
+          properties:
+            text: { type: string }
+            canRequestExpert: { type: boolean, description: 건물관리자만 true (FR-121) }
+            riskNoticeId: { type: integer, nullable: true }
+        completedAt: { type: string, format: date-time }
+
+    CaseSummary:
+      type: object
+      properties:
+        caseId: { type: integer }
+        caseNo: { type: string }
+        buildingId: { type: integer, nullable: true }
+        photos:
+          type: array
+          items:
+            type: object
+            properties:
+              kind: { type: string, enum: [analysis, record] }
+              photoId: { type: integer }
+              alt: { type: string }
+        description: { type: string, nullable: true }
+        analysis:
+          oneOf:
+            - $ref: '#/components/schemas/AnalysisResult'
+            - type: 'null'
+        record:
+          oneOf:
+            - $ref: '#/components/schemas/InspectionRecord'
+            - type: 'null'
+        currentVerdict:
+          oneOf:
+            - $ref: '#/components/schemas/Verdict'
+            - type: 'null'
+
+    CaseRail:
+      type: object
+      description: 단계 상태 done · current · blocked:Gn · pending · n/a (n/a 는 '해당 없음' 글자 표기 — FR-008)
+      properties:
+        caseNo: { type: string }
+        analysis: { type: string }
+        record: { type: string }
+        verify: { type: string }
+        action: { type: string }
+
+    BuildingSummary:
+      type: object
+      properties:
+        buildingId: { type: integer }
+        buildingName: { type: string }
+        buildingType: { $ref: '#/components/schemas/Code' }
+        accessKinds: { type: array, items: { type: string, enum: [record, manage] } }
+
+    BuildingRail:
+      type: object
+      properties:
+        buildingId: { type: integer }
+        buildingName: { type: string }
+        historyCount: { type: integer }
+        overdueCount: { type: integer }
+        awaitingCount: { type: integer }
+
+    SourceStatus:
+      type: object
+      description: C7 데이터 출처 표시줄
+      properties:
+        externalIncluded: { type: boolean }
+        lastSyncStatus: { type: string, enum: [ok, failed], nullable: true }
+        lastSyncAt: { type: string, format: date-time, nullable: true }
+        excludedBuildingCount: { type: integer }
+
+    HistoryEntry:
+      type: object
+      properties:
+        occurredAt: { type: string, format: date-time }
+        kind: { type: string, enum: [ai_analysis, field_record, expert_verdict, expert_connection, external] }
+        locationText: { type: string, nullable: true }
+        defectType: { type: string, nullable: true }
+        outcome: { type: string }
+        caseId: { type: integer, nullable: true }
+        sourceId: { type: integer }
+
+    RepeatPattern:
+      type: object
+      properties:
+        locationText: { type: string }
+        defectType: { type: string }
+        occurrenceCount: { type: integer }
+        basis: { type: array, items: { $ref: '#/components/schemas/HistoryEntry' } }
+
+    RecordFields:
+      type: object
+      properties:
+        locationText: { type: string, maxLength: 200 }
+        defectType: { type: string }
+        repairStatus: { type: string, enum: [completed, pending] }
+        repairMethod: { type: string, maxLength: 200 }
+        inspectionNote: { type: string, maxLength: 1000 }
+        aiMatch: { type: string, enum: [match, mismatch, none] }
+        riskFlag: { type: boolean, description: UC6 E3 점검 결과 위험 (ext) }
+
+    InspectionRecord:
+      allOf:
+        - $ref: '#/components/schemas/RecordFields'
+        - type: object
+          properties:
+            recordId: { type: integer }
+            caseId: { type: integer }
+            caseNo: { type: string }
+            buildingId: { type: integer }
+            buildingType: { $ref: '#/components/schemas/Code' }
+            resultId: { type: integer, nullable: true }
+            status: { type: string, enum: [draft, saved] }
+            photoIds: { type: array, items: { type: integer } }
+            savedAt: { type: string, format: date-time, nullable: true }
+
+    VerificationQueueItem:
+      type: object
+      properties:
+        itemId: { type: integer }
+        caseNo: { type: string }
+        defectType: { type: string }
+        status: { type: string, enum: [waiting, data_requested, verified] }
+        aiTopCause: { type: string }
+        fieldNote: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    Verdict:
+      type: object
+      properties:
+        verdictId: { type: integer }
+        itemId: { type: integer }
+        versionNo: { type: integer }
+        expertNameMasked: { type: string }
+        verdict: { type: string, enum: [match, mismatch] }
+        opinion: { type: string, nullable: true }
+        diffNote: { type: string, nullable: true }
+        riskHigh: { type: boolean }
+        decidedAt: { type: string, format: date-time }
+
+    DataRequest:
+      type: object
+      properties:
+        dataReqId: { type: integer }
+        itemId: { type: integer }
+        caseNo: { type: string }
+        reason: { type: string }
+        sentAt: { type: string, format: date-time, nullable: true }
+        resolvedAt: { type: string, format: date-time, nullable: true }
+        recordId: { type: integer }
+
+    Schedule:
+      type: object
+      properties:
+        scheduleId: { type: integer }
+        buildingId: { type: integer }
+        buildingName: { type: string }
+        itemText: { type: string }
+        cycleCode: { type: string, nullable: true }
+        assigneeId: { type: integer }
+        assigneeNameMasked: { type: string }
+        dueDate: { type: string, format: date }
+        displayStatus: { type: string, enum: [scheduled, due, overdue, completed, cancelled] }
+        completedRecordId: { type: integer, nullable: true }
+
+    PriorityRun:
+      type: object
+      description: notice 항상 포함 (FR-062)
+      properties:
+        runId: { type: integer }
+        periodFrom: { type: string, format: date }
+        periodTo: { type: string, format: date }
+        createdAt: { type: string, format: date-time }
+        notice: { $ref: '#/components/schemas/Notice' }
+        sourceStatus: { $ref: '#/components/schemas/SourceStatus' }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              rank: { type: integer }
+              buildingId: { type: integer }
+              buildingName: { type: string }
+              locationText: { type: string, nullable: true }
+              defectType: { type: string }
+              confidence: { type: string, enum: [normal, low] }
+              assignedAction: { type: string, enum: [inspection, expert], nullable: true }
+              basis:
+                type: array
+                minItems: 1
+                items: { $ref: '#/components/schemas/HistoryEntry' }
+
+    RiskNotice:
+      type: object
+      properties:
+        riskNoticeId: { type: integer }
+        caseId: { type: integer }
+        caseNo: { type: string }
+        buildingId: { type: integer, nullable: true }
+        sourceKind: { type: string, enum: [analysis, verdict, inspection] }
+        createdAt: { type: string, format: date-time }
+        closedAt: { type: string, format: date-time, nullable: true }
+        closeReason: { type: string, enum: [connected, dismissed], nullable: true }
+
+    ExpertRequest:
+      type: object
+      properties:
+        expReqId: { type: integer }
+        caseId: { type: integer }
+        caseNo: { type: string }
+        buildingId: { type: integer }
+        originKind: { type: string }
+        riskNoticeId: { type: integer, nullable: true }
+        specialtyCode: { type: string }
+        wishFrom: { type: string, format: date }
+        wishTo: { type: string, format: date }
+        status: { type: string, enum: [drafting, awaiting, not_confirmed, connected, closed] }
+        attempts: { type: array, items: { $ref: '#/components/schemas/ExpertAttempt' } }
+
+    ExpertCandidate:
+      type: object
+      properties:
+        expertId: { type: integer }
+        nameMasked: { type: string }
+        specialties: { type: array, items: { type: string } }
+        availableDates: { type: array, items: { type: string, format: date } }
+        alreadyAttempted: { type: boolean }
+
+    ExpertAttempt:
+      type: object
+      properties:
+        attemptId: { type: integer }
+        expReqId: { type: integer }
+        caseNo: { type: string }
+        expertNameMasked: { type: string }
+        scopeText: { type: string }
+        sentAt: { type: string, format: date-time }
+        response: { type: string, enum: [accepted, declined, no_response], nullable: true }
+        respondedAt: { type: string, format: date-time, nullable: true }
+        respondBy: { type: string, format: date-time, nullable: true, description: 응답 시한 (expert_response_hours 미설정이면 null) }
+
+    Notification:
+      type: object
+      properties:
+        notifId: { type: integer }
+        kind: { type: string, enum: [assigned, due, overdue, data_request, risk_notice, expert_request, expert_response] }
+        title: { type: string }
+        refKind: { type: string }
+        refId: { type: integer }
+        createdAt: { type: string, format: date-time }
+        readAt: { type: string, format: date-time, nullable: true }
+
+    Constant:
+      type: object
+      properties:
+        key: { type: string }
+        value: { type: string, nullable: true }
+        unit: { type: string, nullable: true }
+        description: { type: string }
+
+    AdminUser:
+      type: object
+      properties:
+        userId: { type: integer }
+        nameMasked: { type: string }
+        emailMasked: { type: string }
+        phoneMasked: { type: string, nullable: true }
+        orgId: { type: integer, nullable: true }
+        orgName: { type: string, nullable: true }
+        roles: { type: array, items: { type: string } }
+        disabled: { type: boolean }
+        mustChangePassword: { type: boolean }
+    RoleAssignment:
+      type: object
+      required: [roles]
+      properties:
+        roles: { type: array, items: { type: string, enum: [general, facility, building, enterprise, expert, operator] } }
+    BuildingAccessGrant:
+      type: object
+      required: [buildingId, accessKind]
+      properties:
+        buildingId: { type: integer }
+        accessKind: { type: string, enum: [record, manage] }
+    RbacMatrix:
+      type: object
+      properties:
+        roles: { type: array, items: { type: string } }
+        permissions: { type: array, items: { type: object, properties: { code: { type: string }, description: { type: string }, locked: { type: boolean } } } }
+        grants: { type: object, additionalProperties: { type: array, items: { type: string } } }
+    AuditEntry:
+      type: object
+      properties:
+        auditId: { type: integer }
+        action: { type: string }
+        actor: { type: object, nullable: true }
+        target: { type: object, nullable: true }
+        detail: { type: object }
+        at: { type: string }

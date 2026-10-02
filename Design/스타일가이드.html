@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Buildcare AI 스타일가이드</title>
+<meta name="description" content="Buildcare AI 디자인 시스템 v2 — 현장 점검·유지관리 도구를 위한 토큰, 컴포넌트, 도메인 패턴, 문구 규칙">
+<link rel="stylesheet" href="assets/buildcare-ui.css">
+<style>
+  body { margin: 0; }
+  .doc { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100vh; }
+  .side { position: sticky; top: 0; height: 100vh; overflow-y: auto; background: var(--surface-dark); color: #c9d1db; padding: 24px 16px; }
+  .side .brand { display: flex; align-items: center; gap: 10px; color: #fff; font-weight: 700; font-size: 16px; padding: 0 8px 20px; }
+  .side .brand small { display: block; font-size: 11px; font-weight: 500; color: #8f9aa8; }
+  .logo { width: 30px; height: 30px; border-radius: 7px; background: var(--primary); display: grid; place-items: center; }
+  .logo svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; }
+  .side nav a { display: flex; gap: 10px; padding: 8px; border-radius: 6px; color: #c9d1db; text-decoration: none; font-size: 14px; }
+  .side nav a span { color: #6f7b8a; font: 500 12px/1.6 var(--mono); width: 20px; }
+  .side nav a:hover, .side nav a.on { background: rgba(255,255,255,.08); color: #fff; }
+  .side .side-foot { margin-top: 24px; padding: 12px 8px; border-top: 1px solid rgba(255,255,255,.1); font-size: 12px; color: #8f9aa8; }
+  .side .side-foot a { color: #9ec2f5; }
+  main { padding: 0 0 80px; min-width: 0; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 40px; }
+  .cover { background: var(--canvas); border-bottom: 1px solid var(--line); padding: 48px 0 36px; }
+  .cover .eyebrow { font-size: 13px; font-weight: 600; color: var(--primary); }
+  .cover h1 { margin: 8px 0 12px; }
+  .cover p { max-width: 720px; font-size: 16px; }
+  .cover .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+  section.sec { padding-top: 56px; scroll-margin-top: 8px; }
+  .sec-head { margin-bottom: 20px; }
+  .sec-head .no { font: 600 12px var(--mono); color: var(--primary); }
+  .sec-head h2 { margin: 4px 0 6px; }
+  .sec-head p { max-width: 760px; }
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .sub { margin: 32px 0 12px; }
+  .box { background: var(--canvas); border: 1px solid var(--line); border-radius: var(--r-md); padding: 20px; }
+  .demo-label { font: 500 12px/1.5 var(--mono); color: var(--muted); margin-top: 10px; }
+  .principle { background: var(--canvas); border: 1px solid var(--line); border-radius: var(--r-md); padding: 20px; display: grid; gap: 8px; align-content: start; }
+  .principle .k { font: 700 12px var(--mono); color: var(--primary); }
+  .principle .why { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 8px; margin-top: 4px; }
+  .sw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+  .sw { background: var(--canvas); border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; }
+  .sw .c { height: 64px; display: flex; align-items: flex-end; padding: 8px 10px; font-size: 12px; font-weight: 600; }
+  .sw .m { padding: 10px 12px 12px; display: grid; gap: 2px; }
+  .sw .m b { font-size: 13px; color: var(--ink); }
+  .sw .m code { font: 12px var(--mono); color: var(--muted); }
+  .sw .m em { font-style: normal; font-size: 12px; color: var(--muted); }
+  .risk-row { display: grid; grid-template-columns: 120px repeat(3, minmax(0, 1fr)); gap: 10px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); font-size: 13px; }
+  .risk-row:first-child { border-top: 0; }
+  .chipcol { height: 36px; border-radius: 6px; display: grid; place-items: center; font: 600 12px var(--mono); }
+  .type-row { display: grid; grid-template-columns: 140px 1fr 200px; gap: 16px; align-items: baseline; padding: 14px 0; border-top: 1px solid var(--line); }
+  .type-row code { font: 12px var(--mono); color: var(--primary); }
+  .type-row .spec { font: 12px var(--mono); color: var(--muted); text-align: right; }
+  .space-row { display: grid; grid-template-columns: 70px 50px 1fr; gap: 12px; align-items: center; padding: 4px 0; font: 12px var(--mono); color: var(--muted); }
+  .space-row i { height: 12px; background: var(--primary); border-radius: 2px; display: block; }
+  .ic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+  .ic-cell { display: grid; place-items: center; gap: 8px; padding: 14px 8px; background: var(--canvas); border: 1px solid var(--line); border-radius: var(--r-md); font-size: 12px; color: var(--muted); color: var(--ink); }
+  .ic-cell span { color: var(--muted); }
+  .dd { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .dd > div { background: var(--canvas); border: 1px solid var(--line); border-radius: var(--r-md); padding: 20px; border-top: 4px solid; }
+  .dd .do { border-top-color: var(--ok-bar); } .dd .dont { border-top-color: var(--risk-bar); }
+  .dd ul { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 8px; font-size: 14px; }
+  .copy-tbl td:first-child { font-weight: 600; color: var(--ink); white-space: nowrap; }
+  .ok-text { color: var(--ok); font-weight: 600; } .no-text { color: var(--risk); font-weight: 600; text-decoration: line-through; text-decoration-thickness: 1px; }
+  pre.tokens { background: var(--surface-dark); color: #dfe6ee; border-radius: var(--r-md); padding: 20px; overflow-x: auto; font: 12px/1.7 var(--mono); margin: 0; }
+  .stack { display: grid; gap: 12px; }
+  .mini-phone { max-width: 380px; border: 1px solid var(--line); border-radius: 20px; overflow: hidden; background: var(--surface-soft); }
+  .tbl-wrap { overflow-x: auto; background: var(--canvas); border: 1px solid var(--line); border-radius: var(--r-md); }
+  .tbl-wrap .table { min-width: 560px; }
+  @media (max-width: 980px) {
+    .doc { grid-template-columns: 1fr; }
+    .side { position: static; height: auto; }
+    .side nav { display: flex; flex-wrap: wrap; gap: 4px; }
+    .grid3 { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 640px) {
+    .wrap { padding: 0 16px; }
+    .grid2, .grid3, .dd { grid-template-columns: 1fr; }
+    .type-row { grid-template-columns: 1fr; gap: 4px; } .type-row .spec { text-align: left; }
+    .risk-row { grid-template-columns: 1fr 1fr; }
+    .side nav a span { display: none; }
+  }
+</style>
+</head>
+<body class="bc">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><path d="M5 21V4h10v17M15 9h4v12M3 21h18M8 8h4M8 12h4M8 16h4"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/></symbol>
+  <symbol id="i-block" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.5 6.5a4 4 0 0 0-5.3 5.3L3 18l3 3 6.2-6.2a4 4 0 0 0 5.3-5.3l-2.5 2.5-2.5-.5-.5-2.5z"/></symbol>
+  <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+  <symbol id="i-cloud-off" viewBox="0 0 24 24"><path d="M3 3l18 18M8 7.3A6 6 0 0 1 18 11a4 4 0 0 1 2.4 6.6M17 19H7a5 5 0 0 1-2.7-9.2"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7M8 20v-6h8v6"/></symbol>
+</svg>
+
+<div class="doc">
+  <aside class="side">
+    <div class="brand"><div class="logo"><svg viewBox="0 0 24 24"><path d="M5 21V4h10v17M15 9h4v12M3 21h18"/></svg></div><div>Buildcare AI<small>Design System v2.0</small></div></div>
+    <nav aria-label="스타일가이드 목차">
+      <a href="#principles"><span>01</span>디자인 원칙</a>
+      <a href="#color"><span>02</span>컬러</a>
+      <a href="#type"><span>03</span>타이포그래피</a>
+      <a href="#layout"><span>04</span>간격·형태·깊이</a>
+      <a href="#icons"><span>05</span>아이콘</a>
+      <a href="#base"><span>06</span>기본 컴포넌트</a>
+      <a href="#domain"><span>07</span>도메인 컴포넌트</a>
+      <a href="#patterns"><span>08</span>화면 패턴</a>
+      <a href="#voice"><span>09</span>문구 규칙</a>
+      <a href="#a11y"><span>10</span>접근성·반응형</a>
+      <a href="#dodont"><span>11</span>Do &amp; Don't</a>
+      <a href="#tokens"><span>12</span>토큰</a>
+    </nav>
+    <div class="side-foot">
+      화면 적용 예시: <a href="UI_프로토타입_Buildcare AI.html">UI 프로토타입</a><br>
+      검토 근거: UX_리뷰_Buildcare AI.md<br>
+      v1(BMW 기반)은 archive/ 에 보관
+    </div>
+  </aside>
+
+  <main>
+    <header class="cover">
+      <div class="wrap">
+        <div class="eyebrow">Design System v2.0 · 2026-10-03</div>
+        <h1 class="t-display">현장에서 믿고 쓰는 건물 하자 관리 도구</h1>
+        <p>Buildcare AI 는 사진 한 장으로 하자를 1차 판단하고, 현장 기록과 전문가 검증을 쌓아 유지관리 의사결정까지 이어지는 <b>업무 도구</b>입니다. 이 시스템은 마케팅 화면이 아니라 장갑 낀 손, 흔들리는 화면, 바쁜 관리자, 그리고 AI 를 과신하면 안 되는 상황을 위해 설계했습니다.</p>
+        <div class="meta">
+          <span class="tag tag-info">Pretendard</span>
+          <span class="tag tag-plain tag-na">단일 액션 블루 #1c69d4</span>
+          <span class="tag tag-plain tag-na">위험도 3단계 + 해당 없음</span>
+          <span class="tag tag-plain tag-na">출처 표지 AI · 현장 · 전문가</span>
+          <span class="tag tag-plain tag-na">모바일 터치 48 / 52px</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="wrap">
+
+      <!-- 01 -->
+      <section class="sec" id="principles">
+        <div class="sec-head"><div class="no">01</div><h2 class="t-h1">디자인 원칙</h2>
+          <p>SD_02 의 UX 원칙 U1~U8 은 그대로 유지하고, 시각·상호작용 차원에서 다섯 가지 원칙을 더했습니다. 원칙이 충돌하면 위에 있는 것이 이깁니다.</p></div>
+        <div class="grid3">
+          <div class="principle"><div class="k">P1 · Field-first</div><h3 class="t-h3">현장에서 먼저 된다</h3><p class="t-small">현장 화면은 한 손, 엄지, 야외 밝기를 기준으로 그립니다. 주요 버튼 52px, 본문 16px, 저장 상태 상시 표시.</p><div class="why">현장 점검 앱의 공통 패턴 · SD_02 U7 · `[혜택] 2단계` 점검시간 절감</div></div>
+          <div class="principle"><div class="k">P2 · Explainable AI</div><h3 class="t-h3">AI 는 근거와 함께 말한다</h3><p class="t-small">AI 결과에는 항상 출처 표지, 말로 쓴 신뢰도, 1차 참고용 고지가 붙습니다. 확정처럼 보이는 표현을 쓰지 않습니다.</p><div class="why">AI 보조진단 UX 의 공통 패턴 · BR-DEF-01 · `[부정적 영향]`</div></div>
+          <div class="principle"><div class="k">P3 · Say the state</div><h3 class="t-h3">상태는 말로 쓴다</h3><p class="t-small">색만으로 상태를 구분하지 않습니다. 글자 + 색 + 모양(원·마름모·삼각형)을 함께 씁니다. 흑백 인쇄에서도 읽혀야 합니다.</p><div class="why">SD_02 §13-1 · WCAG 1.4.1</div></div>
+          <div class="principle"><div class="k">P4 · Block becomes path</div><h3 class="t-h3">막힘은 길이 된다</h3><p class="t-small">막힌 자리에는 이유·푸는 사람·다음 행동이 함께 있습니다. 토스트·모달로 사라지게 하지 않습니다.</p><div class="why">SD_02 U1 · 게이트 G0~G10</div></div>
+          <div class="principle"><div class="k">P5 · Role density</div><h3 class="t-h3">밀도는 역할에 맞춘다</h3><p class="t-small">시설관리자 화면은 넓고 크게, 전문가 화면은 나란히 비교, 기업 관리자 화면은 표와 숫자 중심으로 밀도를 다르게 둡니다.</p><div class="why">CMMS·펀치리스트·리스크 대시보드 패턴 · SD_02 §2-1 역할별 뷰</div></div>
+          <div class="principle"><div class="k">P6 · Calm by default</div><h3 class="t-h3">평소엔 조용하게</h3><p class="t-small">색은 위험할 때만 씁니다. 장식 그림자·그라데이션·대형 히어로는 쓰지 않습니다. 주목도는 위험 신호에 남겨 둡니다.</p><div class="why">경보 피로(alarm fatigue) 방지 · 위험 권고의 신호 가치 보존</div></div>
+        </div>
+      </section>
+
+      <!-- 02 -->
+      <section class="sec" id="color">
+        <div class="sec-head"><div class="no">02</div><h2 class="t-h1">컬러</h2>
+          <p>색은 네 가지 역할로만 씁니다. <b>행동</b>(블루 하나), <b>중립</b>(차가운 슬레이트), <b>위험도</b>(정상·주의·위험), <b>출처</b>(AI·현장·전문가). 역할을 넘나들지 않습니다 — 위험 빨강은 버튼이 되지 않고, 액션 블루는 상태를 뜻하지 않습니다.</p></div>
+
+        <h3 class="t-h2 sub">행동 · 중립</h3>
+        <div class="sw-grid">
+          <div class="sw"><div class="c" style="background:var(--primary);color:#fff">5.2 : 1</div><div class="m"><b>Primary</b><code>--primary #1c69d4</code><em>버튼·링크·선택 표시 전용</em></div></div>
+          <div class="sw"><div class="c" style="background:var(--primary-active);color:#fff">눌림</div><div class="m"><b>Primary Active</b><code>--primary-active #0f53b3</code><em>hover·눌림</em></div></div>
+          <div class="sw"><div class="c" style="background:var(--primary-soft);color:var(--primary-active)">6.4 : 1</div><div class="m"><b>Primary Soft</b><code>--primary-soft #eaf1fc</code><em>선택된 행·세그먼트</em></div></div>
+          <div class="sw"><div class="c" style="background:var(--primary-disabled);color:var(--body)">7.5 : 1</div><div class="m"><b>Disabled</b><code>--primary-disabled #d5dbe3</code><em>이유 붙은 비활성 (C3)</em></div></div>
+          <div class="sw"><div class="c" style="background:var(--ink);color:#fff">16.3 : 1</div><div class="m"><b>Ink</b><code>--ink #18212b</code><em>제목·핵심 값</em></div></div>
+          <div class="sw"><div class="c" style="background:var(--body);color:#fff">10.4 : 1</div><div class="m"><b>Body</b><code>--body #354150</code><em>본문</em></div></div>
+          <div class="sw"><div class="c" style="background:var(--muted);color:#fff">5.7 : 1</div><div class="m"><b>Muted</b><code>--muted #5c6878</code><em>보조·이유 문구</em></div></div>
+          <div class="sw"><div class="c" style="background:var(--surface-soft);color:var(--muted)">앱 바탕</div><div class="m"><b>Surface Soft</b><code>--surface-soft #f4f6f8</code><em>앱 바탕·고지 바탕</em></div></div>
+          <div class="sw"><div class="c" style="background:var(--line-strong)"></div><div class="m"><b>Line Strong</b><code>--line-strong #c3cbd5</code><em>입력·버튼 외곽선</em></div></div>
+          <div class="sw"><div class="c" style="background:var(--line)"></div><div class="m"><b>Line</b><code>--line #dfe4ea</code><em>카드·표 구분선</em></div></div>
+        </div>
+
+        <h3 class="t-h2 sub">위험도 — 하자 상태 전용</h3>
+        <div class="box">
+          <div class="risk-row t-caption"><span>단계</span><span>글자 (on 바탕)</span><span>바탕</span><span>막대·도형</span></div>
+          <div class="risk-row"><span class="tag tag-ok">정상 · 완료</span><div class="chipcol" style="background:var(--ok-bg);color:var(--ok)">#136c35 · 5.9:1</div><div class="chipcol" style="background:var(--ok-bg);color:var(--ok)">#e9f6ee</div><div class="chipcol" style="background:var(--ok-bar);color:#fff">#22c55e · 원</div></div>
+          <div class="risk-row"><span class="tag tag-warn">주의 · 지연</span><div class="chipcol" style="background:var(--warn-bg);color:var(--warn)">#8a4b05 · 6.3:1</div><div class="chipcol" style="background:var(--warn-bg);color:var(--warn)">#fff5e1</div><div class="chipcol" style="background:var(--warn-bar);color:var(--ink)">#f59e0b · 마름모</div></div>
+          <div class="risk-row"><span class="tag tag-risk">위험 · 차단</span><div class="chipcol" style="background:var(--risk-bg);color:var(--risk)">#b42318 · 5.8:1</div><div class="chipcol" style="background:var(--risk-bg);color:var(--risk)">#fdeeec</div><div class="chipcol" style="background:var(--risk-bar);color:#fff">#dc2626 · 삼각형</div></div>
+          <div class="risk-row"><span class="tag tag-na">해당 없음</span><div class="chipcol" style="background:var(--na-bg);color:var(--na)">#5c6878 · 5.2:1</div><div class="chipcol" style="background:var(--na-bg);color:var(--na)">#f4f6f8</div><div class="chipcol" style="background:var(--muted-soft);color:#fff">#8a95a3 · 선</div></div>
+          <p class="t-small t-muted" style="margin-top:12px">v1 의 문제였던 "흰 바탕 위 Warning #f59e0b 글자(2.1:1)"를 없앴습니다. 막대 색과 글자 색을 분리해 모든 상태 글자가 4.5:1 이상입니다.</p>
+        </div>
+
+        <h3 class="t-h2 sub">출처 표지 — 누가 이 내용을 말했나</h3>
+        <div class="box">
+          <div class="btn-row" style="gap:12px">
+            <span class="src src-ai"><svg class="ic ic-sm"><use href="#i-sparkle"/></svg>AI 1차 분석</span>
+            <span class="src src-field"><svg class="ic ic-sm"><use href="#i-wrench"/></svg>현장 기록</span>
+            <span class="src src-expert"><svg class="ic ic-sm"><use href="#i-shield"/></svg>전문가 판정</span>
+          </div>
+          <p class="t-small" style="margin-top:12px">AI 가 만든 문장은 <b>인디고 표지</b>로 사람이 쓴 기록과 구별합니다. 전문가 판정은 청록 표지입니다. 표지는 하자 건 요약(C6), 이력 타임라인, 비교 검토 화면에서 모든 값 옆에 붙습니다 — "이건 누구 말인가"가 진단 책임(`[핵심 장벽] 3단계`)의 출발점이기 때문입니다.</p>
+        </div>
+      </section>
+
+      <!-- 03 -->
+      <section class="sec" id="type">
+        <div class="sec-head"><div class="no">03</div><h2 class="t-h1">타이포그래피</h2>
+          <p><b>Pretendard</b> 를 씁니다. 한글·영문·숫자의 높이와 굵기가 맞고, 숫자 폭 고정(tabular)을 지원해 건수·날짜·금액 표가 흔들리지 않습니다. 본문은 <b>400</b>입니다 — v1 의 Light 300 은 야외 모바일에서 읽히지 않습니다.</p></div>
+        <div class="box" style="padding-top:6px;padding-bottom:6px">
+          <div class="type-row" style="border-top:0"><code>t-display</code><span class="t-display">우선순위 대시보드</span><span class="spec">30 / 700 / 1.25</span></div>
+          <div class="type-row"><code>t-h1</code><span class="t-h1">한빛마을 3단지 104동</span><span class="spec">24 / 700 / 1.3</span></div>
+          <div class="type-row"><code>t-h2</code><span class="t-h2">분석 결과</span><span class="spec">19 / 700 / 1.35</span></div>
+          <div class="type-row"><code>t-h3</code><span class="t-h3">3층 북측 외벽 · 균열</span><span class="spec">16 / 600 / 1.45</span></div>
+          <div class="type-row"><code>t-body</code><span class="t-body">균열 폭을 같은 위치에서 2주 뒤 다시 촬영해 변화를 확인하세요.</span><span class="spec">15 / 400 / 1.6 (모바일 16)</span></div>
+          <div class="type-row"><code>t-small</code><span class="t-small">기록 2026-09-28 · 시설관리자 박**</span><span class="spec">13 / 400 / 1.5</span></div>
+          <div class="type-row"><code>t-caption</code><span class="t-caption">촬영 2026-10-01 14:22</span><span class="spec">12 / 500 / 1.4</span></div>
+          <div class="type-row"><code>.num</code><span class="t-h2 num">D-2026-0142 · 12건 · 1,250,000원</span><span class="spec">tabular-nums</span></div>
+        </div>
+        <p class="t-small t-muted" style="margin-top:12px">굵기는 400 · 600 · 700 셋만 씁니다. 영문 대문자 자간 라벨(LEARN MORE 류)은 쓰지 않습니다 — 한국어 화면에서는 읽기 속도만 떨어뜨립니다. 줄바꿈은 <code>word-break: keep-all</code> 로 단어 단위를 지킵니다.</p>
+      </section>
+
+      <!-- 04 -->
+      <section class="sec" id="layout">
+        <div class="sec-head"><div class="no">04</div><h2 class="t-h1">간격 · 형태 · 깊이</h2>
+          <p>4px 기반. 모서리는 작게 둥글려 누를 수 있는 것임을 알립니다(버튼·입력 6px, 카드 10px). 깊이는 그림자가 아니라 선과 바탕 차이로 냅니다. 그림자는 화면 위에 떠 있는 것(모바일 하단 바, 팝오버)에만 씁니다.</p></div>
+        <div class="grid2">
+          <div class="box">
+            <div class="t-label" style="margin-bottom:8px">간격</div>
+            <div class="space-row"><span>--s1</span><span>4</span><i style="width:4px"></i></div>
+            <div class="space-row"><span>--s2</span><span>8</span><i style="width:8px"></i></div>
+            <div class="space-row"><span>--s3</span><span>12</span><i style="width:12px"></i></div>
+            <div class="space-row"><span>--s4</span><span>16</span><i style="width:16px"></i></div>
+            <div class="space-row"><span>--s5</span><span>20</span><i style="width:20px"></i></div>
+            <div class="space-row"><span>--s6</span><span>24</span><i style="width:24px"></i></div>
+            <div class="space-row"><span>--s8</span><span>32</span><i style="width:32px"></i></div>
+            <div class="space-row"><span>--s12</span><span>48</span><i style="width:48px"></i></div>
+            <div class="space-row"><span>--s16</span><span>64</span><i style="width:64px"></i></div>
+          </div>
+          <div class="stack">
+            <div class="box">
+              <div class="t-label" style="margin-bottom:10px">모서리</div>
+              <div class="btn-row" style="gap:16px;align-items:flex-end">
+                <div style="text-align:center"><div style="width:56px;height:40px;border:2px solid var(--ink);border-radius:4px"></div><div class="t-caption">태그 4</div></div>
+                <div style="text-align:center"><div style="width:56px;height:40px;border:2px solid var(--primary);border-radius:6px"></div><div class="t-caption">버튼·입력 6</div></div>
+                <div style="text-align:center"><div style="width:56px;height:40px;border:2px solid var(--ink);border-radius:10px"></div><div class="t-caption">카드 10</div></div>
+                <div style="text-align:center"><div style="width:56px;height:40px;border:2px solid var(--ink);border-radius:999px"></div><div class="t-caption">필터 칩</div></div>
+              </div>
+            </div>
+            <div class="box">
+              <div class="t-label" style="margin-bottom:10px">밀도</div>
+              <table class="table"><tr><th>맥락</th><th>행 높이</th><th>주 버튼</th></tr>
+                <tr><td>현장 모바일 (S3 · S7B)</td><td class="num">52px</td><td class="num">52px · 전체 폭</td></tr>
+                <tr><td>업무 데스크톱 (S2 · S4 · S5)</td><td class="num">44px</td><td class="num">44px</td></tr>
+                <tr><td>대시보드 표 (S6)</td><td class="num">44px</td><td class="num">40~44px</td></tr></table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 05 -->
+      <section class="sec" id="icons">
+        <div class="sec-head"><div class="no">05</div><h2 class="t-h1">아이콘</h2>
+          <p>24 격자, 1.75 선 굵기의 선형 아이콘. <b>아이콘은 항상 글자와 함께</b> 씁니다 — 아이콘만 있는 버튼은 카메라·닫기·더보기처럼 관습이 확실한 경우에만 두고, <code>aria-label</code> 을 붙입니다. 이모지는 쓰지 않습니다.</p></div>
+        <div class="ic-grid">
+          <div class="ic-cell"><svg class="ic"><use href="#i-camera"/></svg>촬영<span>camera</span></div>
+          <div class="ic-cell"><svg class="ic"><use href="#i-building"/></svg>건물<span>building</span></div>
+          <div class="ic-cell"><svg class="ic"><use href="#i-alert"/></svg>위험<span>alert</span></div>
+          <div class="ic-cell"><svg class="ic"><use href="#i-block"/></svg>차단<span>block</span></div>
+          <div class="ic-cell"><svg class="ic"><use href="#i-check"/></svg>완료<span>check</span></div>
+          <div class="ic-cell"><svg class="ic"><use href="#i-clock"/></svg>기한<span>clock</span></div>
+          <div class="ic-cell"><svg class="ic"><use href="#i-sparkle"/></svg>AI<span>sparkle</span></div>
+          <div class="ic-cell"><svg class="ic"><use href="#i-wrench"/></svg>현장<span>wrench</span></div>
+          <div class="ic-cell"><svg class="ic"><use href="#i-shield"/></svg>전문가<span>shield</span></div>
+          <div class="ic-cell"><svg class="ic"><use href="#i-history"/></svg>이력<span>history</span></div>
+          <div class="ic-cell"><svg class="ic"><use href="#i-lock"/></svg>권한<span>lock</span></div>
+          <div class="ic-cell"><svg class="ic"><use href="#i-cloud-off"/></svg>연동 끊김<span>cloud-off</span></div>
+        </div>
+      </section>
+
+      <!-- 06 -->
+      <section class="sec" id="base">
+        <div class="sec-head"><div class="no">06</div><h2 class="t-h1">기본 컴포넌트</h2></div>
+
+        <h3 class="t-h2 sub">버튼</h3>
+        <div class="box">
+          <div class="btn-row">
+            <button class="btn btn-primary"><svg class="ic"><use href="#i-sparkle"/></svg>분석 요청</button>
+            <button class="btn btn-secondary">이력 보기</button>
+            <button class="btn btn-ghost">자세히<svg class="ic ic-sm"><use href="#i-arrow"/></svg></button>
+            <button class="btn btn-primary" aria-disabled="true" aria-describedby="r1">분석 요청</button>
+          </div>
+          <div class="reason" id="r1"><svg class="ic"><use href="#i-block"/></svg>사진 초점이 맞지 않아 분석할 수 없습니다</div>
+          <div class="demo-label">btn-primary · btn-secondary · btn-ghost · aria-disabled + reason (C3) — 한 화면에 Primary 는 하나</div>
+        </div>
+
+        <h3 class="t-h2 sub">입력</h3>
+        <div class="grid2">
+          <div class="box stack">
+            <div class="field"><label for="f1">위치 <span class="req">필수</span></label><input id="f1" class="input" value="3층 북측 외벽"><span class="hint">층 · 방향 · 부위 순으로 쓰면 반복 하자가 정확히 묶입니다</span></div>
+            <div class="field"><label for="f2">건물 유형</label><input id="f2" class="input" value="공동주택" readonly><span class="hint">건물에 등록된 값 — 여기서 바꾸지 않습니다</span></div>
+            <div class="field"><label for="f3">연락처</label><input id="f3" class="input is-error" value="010-12"><span class="err-text">전화번호 형식이 아닙니다 (예: 010-1234-5678)</span></div>
+          </div>
+          <div class="box stack">
+            <div class="field"><span class="label">보수 결과 <span class="req">필수</span></span>
+              <div class="seg" role="radiogroup" aria-label="보수 결과">
+                <label><input type="radio" name="rr" checked><span>보수 완료</span></label>
+                <label><input type="radio" name="rr"><span>미완료 · 보수 예정</span></label>
+              </div><span class="hint">"미완료"도 선택하는 값입니다 — 비워 두면 저장되지 않습니다 (SD_02 U7)</span></div>
+            <label class="check"><input type="checkbox"><span>위 자료를 선택한 전문가 1명에게 공유하는 데 동의합니다</span></label>
+            <div class="chips"><button class="chip" aria-pressed="true">전체 <span class="count">12</span></button><button class="chip" aria-pressed="false">균열 <span class="count">7</span></button><button class="chip" aria-pressed="false">누수 <span class="count">3</span></button><button class="chip" aria-pressed="false">결로 <span class="count">2</span></button></div>
+          </div>
+        </div>
+
+        <h3 class="t-h2 sub">태그 · 탭</h3>
+        <div class="box stack">
+          <div class="btn-row"><span class="tag tag-ok">정상</span><span class="tag tag-warn">주의</span><span class="tag tag-risk">위험 가능성</span><span class="tag tag-na">해당 없음</span><span class="tag tag-info">검증 대기</span><span class="tag tag-warn">지연 3일</span><span class="tag tag-ok">완료</span></div>
+          <div class="tabs" role="tablist"><button class="tab" role="tab" aria-selected="true">시간순 이력</button><button class="tab" role="tab" aria-selected="false">반복 하자</button><button class="tab" role="tab" aria-selected="false">정기점검</button></div>
+        </div>
+      </section>
+
+      <!-- 07 -->
+      <section class="sec" id="domain">
+        <div class="sec-head"><div class="no">07</div><h2 class="t-h1">도메인 컴포넌트 — SD_02 C1~C8</h2>
+          <p>이 서비스에만 있는 컴포넌트입니다. 이름과 번호는 SD_02 §3 과 같습니다. 화면을 새로 만들 때 이 컴포넌트를 먼저 찾고, 없을 때만 새로 만듭니다.</p></div>
+
+        <h3 class="t-h2 sub">C1 진행 레일</h3>
+        <div class="stack">
+          <div class="card" style="overflow:hidden"><nav class="rail" aria-label="하자 건 진행"><span class="rail-id">하자 건 D-2026-0142</span><ol>
+            <li class="done"><span class="dot"><svg class="ic ic-sm"><use href="#i-check"/></svg></span>분석</li>
+            <li class="current" aria-current="step"><span class="dot">2</span>현장 기록</li>
+            <li><span class="dot">3</span>전문가 검증</li>
+            <li><span class="dot">4</span>조치</li></ol></nav></div>
+          <div class="card" style="overflow:hidden"><nav class="rail" aria-label="하자 건 진행"><span class="rail-id">하자 건 D-2026-0142</span><ol>
+            <li class="blocked" aria-current="step"><span class="dot">!</span>분석 · 차단 G3</li>
+            <li><span class="dot">2</span>현장 기록</li><li><span class="dot">3</span>전문가 검증</li><li><span class="dot">4</span>조치</li></ol></nav></div>
+          <div class="card" style="overflow:hidden"><nav class="rail" aria-label="하자 건 진행"><span class="rail-id">하자 건 D-2026-0150</span><ol>
+            <li class="done"><span class="dot"><svg class="ic ic-sm"><use href="#i-check"/></svg></span>분석</li>
+            <li class="na"><span class="dot"></span>현장 기록 <em>해당 없음</em></li>
+            <li class="na"><span class="dot"></span>전문가 검증 <em>해당 없음</em></li>
+            <li class="current" aria-current="step"><span class="dot">4</span>조치</li></ol></nav></div>
+          <div class="card" style="overflow:hidden"><div class="rail"><span class="rail-id">한빛마을 3단지 104동</span><div class="rail-count"><span>이력 <b>12</b>건</span><span class="warn">정기점검 지연 <b>1</b>건</span><span>전문가 연결 대기 <b>1</b>건</span></div></div></div>
+        </div>
+        <div class="demo-label">하자 건 레일 (현재 · 차단 · 해당 없음) · 건물 레일 — 단계는 완료=원+체크, 현재=블루, 차단=빨강+게이트 ID, 해당 없음=점선+글자</div>
+
+        <h3 class="t-h2 sub">C2 게이트 차단 블록 · C3 이유 붙은 비활성</h3>
+        <div class="grid2">
+          <div class="gate" role="region" aria-labelledby="g3t"><div class="gate-in">
+            <div class="gate-title" id="g3t"><svg class="ic"><use href="#i-block"/></svg>사진 초점이 맞지 않아 분석할 수 없습니다<span class="gate-code">G3</span></div>
+            <div class="gate-meta"><span>푸는 사람 <b>본인</b></span><span>이용권은 차감되지 않았습니다</span></div>
+            <div class="btn-row"><button class="btn btn-secondary"><svg class="ic"><use href="#i-camera"/></svg>사진 다시 올리기</button></div>
+          </div></div>
+          <div class="gate is-pending" role="region" aria-labelledby="g6t"><div class="gate-in">
+            <div class="gate-title" id="g6t"><svg class="ic"><use href="#i-block"/></svg>자료가 부족해 판정할 수 없습니다<span class="gate-code">G6</span></div>
+            <div class="gate-meta"><span>푸는 사람 <b>기록한 시설관리자 박**</b></span><span>요청 보냄 10-02 14:10</span></div>
+            <div class="btn-row"><button class="btn btn-secondary" aria-disabled="true">추가 자료 요청 보냄</button></div>
+          </div></div>
+        </div>
+        <div class="demo-label">본인 해제 = 직접 조치 버튼 · 타인 해제 = «요청 보내기»만, 보낸 뒤에는 주황 막대(해제 진행 중) · 닫기 버튼 없음</div>
+
+        <h3 class="t-h2 sub">C4 1차 참고용 고지 · C5 위험 권고</h3>
+        <div class="stack">
+          <div class="notice"><svg class="ic"><use href="#i-info"/></svg><div><b>1차 참고용</b> — 이미지 기반 AI 분석으로, 법적·구조적 안전 판정을 대체하지 않습니다. 위험 가능성이 판정되면 자격 있는 전문가의 점검을 받으세요.</div></div>
+          <div class="advice advice-risk"><div class="advice-in"><div class="advice-text"><span class="tag tag-risk" style="width:max-content">위험 가능성</span><b>구조적 손상 가능성이 있습니다</b><span>균열이 길고 비스듬해 구조 균열과 구별이 필요합니다. 전문가 점검을 권합니다.</span></div><button class="btn btn-primary">전문가 점검 요청<svg class="ic ic-sm"><use href="#i-arrow"/></svg></button></div></div>
+          <div class="advice advice-warn"><div class="advice-in"><div class="advice-text"><span class="tag tag-warn" style="width:max-content">신뢰도 낮음</span><b>AI 가 확신하지 못했습니다</b><span>사진이 멀리서 찍혔습니다. 균열이 화면의 절반을 채우도록 다시 찍으면 더 정확합니다.</span></div><button class="btn btn-secondary"><svg class="ic"><use href="#i-camera"/></svg>다시 촬영</button></div></div>
+          <div class="advice advice-ok"><div class="advice-in"><div class="advice-text"><span class="tag tag-ok" style="width:max-content">정상 범위</span><b>지금 당장 조치가 필요한 신호는 없습니다</b><span>2주 뒤 같은 위치를 다시 찍어 변화를 확인하세요.</span></div></div></div>
+        </div>
+        <div class="demo-label">고지 = 결과 카드 맨 위 고정, 닫기 없음 · 권고 = 문구와 다음 행동이 한 블록 · 일반 사용자에게는 [전문가 점검 요청] 없음 (명세 FR-121)</div>
+
+        <h3 class="t-h2 sub">C6 하자 건 요약 — 출처별 칸</h3>
+        <div class="card">
+          <div class="card-head"><div><div class="t-h3">3층 북측 외벽 · 균열</div><div class="t-caption num">D-2026-0142 · 한빛마을 3단지 104동</div></div><span class="tag tag-risk">위험 가능성</span></div>
+          <div class="card-body" style="display:grid;grid-template-columns:140px 1fr;gap:16px">
+            <div class="ph mark"><span class="ph-cap">10-01 촬영</span></div>
+            <div class="stack" style="gap:10px">
+              <div class="tl-row"><span class="src src-ai"><svg class="ic ic-sm"><use href="#i-sparkle"/></svg>AI</span><span class="t-small">건조수축 균열 가능성 높음 · 우수 침투 확장 가능</span></div>
+              <div class="tl-row"><span class="src src-field"><svg class="ic ic-sm"><use href="#i-wrench"/></svg>현장</span><span class="t-small">폭 0.4mm · 길이 1.2m · 미완료 · 보수 예정</span></div>
+              <div class="tl-row"><span class="src src-expert"><svg class="ic ic-sm"><use href="#i-shield"/></svg>전문가</span><span class="t-small t-muted">해당 단계 미진행</span></div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="t-h2 sub">C7 데이터 출처 표시줄 · C8 권한 범위 건물 선택기 · 신뢰도</h3>
+        <div class="grid2">
+          <div class="stack">
+            <div class="sourcebar" role="status"><span><svg class="ic ic-sm"><use href="#i-cloud-off"/></svg><b>외부 이력 미반영</b> 건물관리시스템 연동 실패 (10-03 09:00)</span><span><b>권한 밖 건물 2개</b> 제외</span></div>
+            <div class="box"><div class="t-label" style="margin-bottom:8px">AI 신뢰도 — 숫자 대신 말과 막대</div>
+              <div class="stack" style="gap:8px"><span class="conf" data-level="3"><span class="conf-bars"><i></i><i></i><i></i></span>높음</span><span class="conf" data-level="2"><span class="conf-bars"><i></i><i></i><i></i></span>보통</span><span class="conf" data-level="1"><span class="conf-bars"><i></i><i></i><i></i></span>낮음 — 다시 촬영 권장</span></div></div>
+          </div>
+          <div class="box">
+            <div class="field"><label for="bsel">건물</label>
+              <select id="bsel" class="select"><option>한빛마을 3단지 104동 (공동주택)</option><option>한빛마을 3단지 105동 (공동주택)</option><option>한빛마을 3단지 106동 (공동주택)</option></select>
+              <span class="hint">권한이 있는 건물 3개만 보입니다. 다른 건물은 [권한 요청 보내기]로 요청합니다.</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 08 -->
+      <section class="sec" id="patterns">
+        <div class="sec-head"><div class="no">08</div><h2 class="t-h1">화면 패턴</h2>
+          <p>도메인 레퍼런스에서 가져와 우리 프로세스(P0~P8)에 맞춘 패턴입니다. 실제 적용 화면은 <a href="UI_프로토타입_Buildcare AI.html">UI 프로토타입</a>에 있습니다.</p></div>
+        <div class="tbl-wrap"><table class="table">
+          <tr><th>패턴</th><th>레퍼런스 분야</th><th>적용 화면</th><th>핵심 규칙</th></tr>
+          <tr><td><b>촬영 가이드 먼저</b></td><td>현장 점검 앱 · 보험 사진 청구</td><td>S2 · S3</td><td>업로드 전에 "전체가 보이게 · 30cm~1m · 초점" 세 줄을 보인다. 품질 차단(G3)을 사전에 줄인다</td></tr>
+          <tr><td><b>결과 = 판정 → 원인 → 할 일 → 고지</b></td><td>AI 보조진단 리포트</td><td>S2</td><td>한 줄 판정과 위험도가 먼저, 원인은 "가능한" 복수 순위, 할 일은 "지금 / 지켜보기 / 전문가" 세 갈래</td></tr>
+          <tr><td><b>필수 항목 고정 + 하단 저장 바</b></td><td>펀치리스트 · CMMS 작업지시</td><td>S3</td><td>필수 4항목이 맨 위, 저장 버튼과 저장 상태가 엄지 위치에 고정</td></tr>
+          <tr><td><b>기한별 작업 큐</b></td><td>CMMS 예방정비</td><td>S7B</td><td>지연 → 이번 주 → 예정 순. 지연은 맨 위, 주의 색, 며칠 지났는지 숫자로</td></tr>
+          <tr><td><b>나란히 비교 + 분리된 판정 불가</b></td><td>의료영상 판독 · 코드 리뷰</td><td>S4</td><td>왼쪽 AI, 오른쪽 현장. 일치 / 불일치와 "판정 불가"는 다른 줄의 다른 버튼</td></tr>
+          <tr><td><b>위치로 묶은 타임라인</b></td><td>자산 이력 · 차량 정비 이력</td><td>S5</td><td>월별 시간순 + 같은 위치·종류 재발은 묶음 카드. 각 줄에 출처 표지</td></tr>
+          <tr><td><b>순위에는 이유</b></td><td>리스크 대시보드</td><td>S6</td><td>순위마다 "왜"(재발 횟수·위험도·미조치 기간)와 근거 이력 링크. 신뢰도 낮음은 표시하되 숨기지 않음</td></tr>
+          <tr><td><b>보낼 것을 먼저 보인다</b></td><td>의료정보 제공 동의 · 결제 확인</td><td>S8A · S1</td><td>공유 항목 목록과 수수료가 확정 버튼 위. 동의 체크 전에는 버튼이 이유와 함께 비활성</td></tr>
+        </table></div>
+      </section>
+
+      <!-- 09 -->
+      <section class="sec" id="voice">
+        <div class="sec-head"><div class="no">09</div><h2 class="t-h1">문구 규칙</h2>
+          <p>차분하고 정확하게. AI 는 단정하지 않고, 시스템은 사용자를 탓하지 않으며, 막힌 곳에서는 다음 행동을 말합니다. 존댓말 "-습니다/-세요"로 통일합니다.</p></div>
+        <div class="tbl-wrap"><table class="table copy-tbl">
+          <tr><th>상황</th><th>이렇게</th><th>이렇게 쓰지 않는다</th></tr>
+          <tr><td>AI 원인</td><td class="ok-text">건조수축 균열 가능성이 높습니다</td><td class="no-text">건조수축 균열입니다</td></tr>
+          <tr><td>AI 신뢰도</td><td class="ok-text">AI 가 확신하지 못했습니다 — 다시 촬영하면 더 정확합니다</td><td class="no-text">신뢰도 0.41</td></tr>
+          <tr><td>품질 차단</td><td class="ok-text">사진 초점이 맞지 않아 분석할 수 없습니다</td><td class="no-text">잘못된 사진입니다</td></tr>
+          <tr><td>권한 없음</td><td class="ok-text">이 화면을 볼 권한이 없습니다</td><td class="no-text">403 Forbidden</td></tr>
+          <tr><td>저장 실패</td><td class="ok-text">저장하지 못했습니다 — 입력한 내용은 이 기기에 남아 있습니다</td><td class="no-text">오류가 발생했습니다</td></tr>
+          <tr><td>버튼</td><td class="ok-text">동사로 끝낸다: 분석 요청 · 기록 저장 · 전문가 점검 요청</td><td class="no-text">확인 · 다음 · 제출</td></tr>
+          <tr><td>개인정보</td><td class="ok-text">박** · 010-****-1234</td><td class="no-text">마스킹 없는 실명·번호</td></tr>
+        </table></div>
+        <p class="t-small t-muted" style="margin-top:10px">두 화면에 걸친 차단 문구(G0 · G2 · G6 · G10)는 SD_02 §12 의 문장을 글자 그대로 씁니다. 문구 원천은 DB 의 <code>gate_def.block_message</code> 하나입니다.</p>
+      </section>
+
+      <!-- 10 -->
+      <section class="sec" id="a11y">
+        <div class="sec-head"><div class="no">10</div><h2 class="t-h1">접근성 · 반응형</h2></div>
+        <div class="grid2">
+          <div class="box"><table class="table">
+            <tr><th>항목</th><th>규칙</th></tr>
+            <tr><td>명암</td><td>모든 글자 4.5:1 이상. <code>--muted-soft</code>(3.0:1)는 글자에 쓰지 않는다</td></tr>
+            <tr><td>터치</td><td>48×48 이상, 현장 주요 버튼 52</td></tr>
+            <tr><td>포커스</td><td>3px 블루 링 (<code>--focus</code>), 모든 조작 요소 Tab 도달</td></tr>
+            <tr><td>비활성</td><td><code>aria-disabled</code> + <code>aria-describedby</code>(이유) — 포커스를 받는다</td></tr>
+            <tr><td>차단 블록</td><td>처음 한 번 <code>role="alert"</code>, 이후 <code>role="region"</code></td></tr>
+            <tr><td>사진</td><td>alt = "하자 종류 - 위치 - 촬영일"</td></tr>
+            <tr><td>움직임</td><td>150ms 상태 전환만, <code>prefers-reduced-motion</code> 존중</td></tr>
+          </table></div>
+          <div class="box"><table class="table">
+            <tr><th>폭</th><th>배치</th></tr>
+            <tr><td class="num">&lt; 768</td><td>한 열. 하단 고정 저장 바. 내비는 하단 탭(역할별 3~4개). 표는 카드 목록으로</td></tr>
+            <tr><td class="num">768~1199</td><td>사이드 내비 접힘. 비교 화면(S4)은 위아래 배치</td></tr>
+            <tr><td class="num">≥ 1200</td><td>사이드 내비 + 본문 최대 1200. 비교 화면 좌우 배치</td></tr>
+          </table>
+          <p class="t-small t-muted" style="margin-top:10px">현장 화면(S3 · S7B)은 모바일 화면을 먼저 그리고 넓힙니다. 관리 화면(S5 · S6)은 데스크톱을 먼저 그리고 좁힙니다.</p></div>
+        </div>
+      </section>
+
+      <!-- 11 -->
+      <section class="sec" id="dodont">
+        <div class="sec-head"><div class="no">11</div><h2 class="t-h1">Do &amp; Don't</h2></div>
+        <div class="dd">
+          <div class="do"><h3 class="t-h3">Do</h3><ul>
+            <li>AI 결과마다 출처 표지 · 신뢰도 · 1차 참고용 고지를 함께 둔다</li>
+            <li>위험은 글자 + 색 + 모양 + 다음 행동으로 알린다</li>
+            <li>막힌 버튼 옆에 이유를 쓰고, 푸는 사람이 남이면 «요청 보내기»를 둔다</li>
+            <li>현장 화면은 필수 항목을 위에, 저장 버튼을 엄지 아래에 둔다</li>
+            <li>숫자·날짜·금액은 tabular 숫자로 정렬한다</li>
+            <li>연동이 끊겨도 내부 데이터는 보이고, 빠진 것을 표시줄로 알린다</li>
+          </ul></div>
+          <div class="dont"><h3 class="t-h3">Don't</h3><ul>
+            <li>대형 히어로 · 다크 밴드 · 마케팅 CTA 를 업무 화면에 쓰지 않는다</li>
+            <li>본문을 300 Light 로 쓰지 않는다</li>
+            <li>위험 빨강을 버튼 색으로, 액션 블루를 상태 색으로 쓰지 않는다</li>
+            <li>AI 신뢰도를 0.82 같은 숫자만으로 보이지 않는다</li>
+            <li>차단·오류를 토스트나 닫히는 모달로 처리하지 않는다</li>
+            <li>판정 불가를 일치·불일치와 같은 줄의 세 번째 선택지로 두지 않는다</li>
+          </ul></div>
+        </div>
+      </section>
+
+      <!-- 12 -->
+      <section class="sec" id="tokens">
+        <div class="sec-head"><div class="no">12</div><h2 class="t-h1">토큰</h2>
+          <p>원천 파일: <code>Design/assets/buildcare-ui.css</code>. 스타일가이드와 프로토타입이 같은 파일을 씁니다. SD_02 가 참조하는 토큰 이름(<code>--primary-disabled</code> · <code>--muted</code> · <code>--ink</code> · <code>--surface-soft</code> · <code>--body</code>)은 v1 과 같게 유지했습니다.</p></div>
+<pre class="tokens">:root {
+  /* Action */   --primary:#1c69d4; --primary-active:#0f53b3; --primary-soft:#eaf1fc; --primary-disabled:#d5dbe3;
+  /* Neutral */  --ink:#18212b; --body:#354150; --muted:#5c6878; --muted-soft:#8a95a3;
+                 --line:#dfe4ea; --line-strong:#c3cbd5; --canvas:#fff; --surface-soft:#f4f6f8; --surface-sunken:#eceff3;
+  /* Risk */     --ok:#136c35 / #e9f6ee / #22c55e;  --warn:#8a4b05 / #fff5e1 / #f59e0b;  --risk:#b42318 / #fdeeec / #dc2626
+  /* Source */   --src-ai:#4338ca / #eef0ff;  --src-field:#354150;  --src-expert:#0f6b5c / #e6f4f1
+  /* Type */     Pretendard 400 · 600 · 700 — 30 / 24 / 19 / 16 / 15 / 13 / 12
+  /* Shape */    --r-xs:4 --r-sm:6 --r-md:10 --r-full:999
+  /* Space */    4 · 8 · 12 · 16 · 20 · 24 · 32 · 40 · 48 · 64
+  /* Touch */    --tap:48 --tap-field:52
+}</pre>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+  document.querySelectorAll('.chips').forEach(g => g.addEventListener('click', e => {
+    const c = e.target.closest('.chip'); if (!c) return;
+    g.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x === c));
+  }));
+  document.querySelectorAll('.tabs').forEach(g => g.addEventListener('click', e => {
+    const t = e.target.closest('.tab'); if (!t) return;
+    g.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x === t));
+  }));
+  const links = [...document.querySelectorAll('.side nav a')];
+  const io = new IntersectionObserver(es => es.forEach(en => {
+    if (en.isIntersecting) links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + en.target.id));
+  }), { rootMargin: '-30% 0px -65% 0px' });
+  document.querySelectorAll('section.sec').forEach(s => io.observe(s));
+</script>
+</body>
+</html>

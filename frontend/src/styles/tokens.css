@@ -1,0 +1,88 @@
+/* =====================================================================
+   Buildcare AI 디자인 토큰 — Design/스타일가이드.html §10 CSS 토큰 그대로.
+   화면·컴포넌트는 hex 를 직접 쓰지 않고 이 변수만 참조한다.
+   ===================================================================== */
+:root {
+  /* Brand & Accent — 액션 컬러는 블루 하나 */
+  --primary: #1c69d4;
+  --primary-active: #0653b6;
+  --primary-disabled: #d6d6d6;
+  /* Text & Hairline */
+  --ink: #262626;
+  --body: #3c3c3c;
+  --body-strong: #1a1a1a;
+  --muted: #6b6b6b;
+  --muted-soft: #9a9a9a;
+  --hairline: #e6e6e6;
+  --hairline-strong: #cccccc;
+  /* Surface */
+  --canvas: #ffffff;
+  --surface-soft: #f7f7f7;
+  --surface-card: #fafafa;
+  --surface-strong: #ebebeb;
+  --surface-dark: #1a2129;
+  --surface-dark-elevated: #262e38;
+  --on-primary: #ffffff;
+  --on-dark: #ffffff;
+  --on-dark-soft: #bbbbbb;
+  /* M 트라이컬러 — 장식 구분선 전용, CTA 금지 */
+  --m-blue-light: #0066b1;
+  --m-blue-dark: #1c69d4;
+  --m-red: #e22718;
+  /* Semantic — 하자 위험도 상태에만 */
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #dc2626;
+
+  /* Semantic 글자색: 흰 바탕 명암 4.5:1 확보용(색만으로 구분하지 않으며 글자·형태와 함께 쓴다) */
+  --success-text: #15803d;
+  --warning-text: #b45309;
+  --error-text: #b91c1c;
+  --success-tint: #f0fdf4;
+  --warning-tint: #fffbeb;
+  --error-tint: #fef2f2;
+
+  --font: 'Inter', 'Noto Sans KR', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; /* 700 · 400 · 300 */
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* 형태: 0px 직각이 기본, 원형은 아이콘 버튼·아바타만 */
+  --r-none: 0;
+  --r-full: 9999px;
+
+  /* 간격: 8px 기반 */
+  --s-xxs: 4px;
+  --s-xs: 8px;
+  --s-sm: 12px;
+  --s-md: 16px;
+  --s-lg: 24px;
+  --s-xl: 32px;
+  --s-xxl: 48px;
+  --s-section: 80px;
+
+  --max: 1440px;
+  --touch: 48px;
+
+  /* Type scale (스타일가이드 §02) */
+  --t-display-xl: 700 64px/1.05 var(--font);
+  --t-display-lg: 700 48px/1.1 var(--font);
+  --t-display-md: 700 32px/1.15 var(--font);
+  --t-display-sm: 700 24px/1.25 var(--font);
+  --t-title-lg: 700 20px/1.3 var(--font);
+  --t-title-md: 700 18px/1.4 var(--font);
+  --t-title-sm: 700 16px/1.4 var(--font);
+  --t-body-md: 300 16px/1.55 var(--font);
+  --t-body-sm: 300 14px/1.55 var(--font);
+  --t-caption: 400 12px/1.4 var(--font);
+  --t-label: 700 13px/1.3 var(--font);
+  --t-button: 700 14px/1 var(--font);
+  --t-nav: 400 14px/1.4 var(--font);
+}
+
+@media (max-width: 767px) {
+  :root {
+    --t-display-xl: 700 40px/1.05 var(--font);
+    --t-display-lg: 700 32px/1.1 var(--font);
+    --t-display-md: 700 26px/1.15 var(--font);
+    --s-section: 48px;
+  }
+}

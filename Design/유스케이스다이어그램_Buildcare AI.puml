@@ -1,0 +1,68 @@
+@startuml uc_buildcare_00
+skinparam backgroundColor #F3F1EB
+skinparam shadowing false
+left to right direction
+title Buildcare AI — L1 UseCase Diagram
+
+actor "일반 사용자" as User
+actor "시설관리자" as FM
+actor "건물관리자" as BM
+actor "기업 관리자" as EM
+actor "전문가" as Expert
+actor "Gemini Vision" as Gemini <<AI API>>
+actor "건물관리시스템" as BMS <<외부시스템>>
+actor "결제 수단\n(자료 없음)" as Pay <<외부시스템>>
+
+User <|-- FM
+
+rectangle "Buildcare AI" {
+  package "1단계 AI 하자 분석" {
+    usecase "UC1 하자사진분석요청" as UC1
+    usecase "UC2 유료분석구독" as UC2
+    usecase "AI 이미지 분석" as INC1
+    usecase "1차 참고용 고지" as INC2
+    usecase "전문가 점검 권고" as EXT1
+  }
+  package "2단계 이력 축적" {
+    usecase "UC3 점검보수이력기록" as UC3
+    usecase "UC4 분석결과전문가검증" as UC4
+    usecase "로그인·권한 확인" as INC3
+  }
+  package "3단계 유지관리 플랫폼" {
+    usecase "UC5 건물별유지관리이력조회" as UC5
+    usecase "UC6 정기점검관리" as UC6
+    usecase "UC7 전문가점검연결요청" as UC7
+    usecase "UC8 유지관리우선순위조회" as UC8
+  }
+}
+
+User --> UC1
+User --> UC2
+FM --> UC3
+Expert --> UC4
+BM --> UC5
+BM --> UC6
+BM --> UC7
+EM --> UC8
+UC7 --> Expert
+
+UC1 ..> INC1 : <<include>>
+UC1 ..> INC2 : <<include>>
+EXT1 ..> UC1 : <<extend>>
+UC2 ..> INC3 : <<include>>
+UC3 ..> INC3 : <<include>>
+UC4 ..> INC3 : <<include>>
+UC5 ..> INC3 : <<include>>
+UC6 ..> INC3 : <<include>>
+UC7 ..> INC3 : <<include>>
+UC8 ..> INC3 : <<include>>
+
+INC1 --> Gemini
+UC2 --> Pay
+UC5 --> BMS
+UC8 --> BMS
+
+note right of EXT1
+  확장점: 위험 가능성 판정 시
+end note
+@enduml

@@ -1,0 +1,23 @@
+# Buildcare AI — 컨테이너 단계 없음(research R21). 셸 러너 전제(Node 20+), DB 접속 정보는 CI 변수로 backend/.env 생성
+stages: [unit, integration, build]
+
+unit:
+  stage: unit
+  script:
+    - cd backend && npm ci && npm run lint && npm run format:check && npm test
+    - cd ../frontend && npm ci && npm run lint && npm run format:check && npm test && npm run check:style && npx vue-tsc --noEmit
+
+integration:
+  stage: integration
+  script:
+    - printf "%s" "$BACKEND_ENV_FILE" > backend/.env
+    - cd backend && npm ci && npm run db:check && npm run db:migrate && npm run test:integration
+  when: manual
+
+build:
+  stage: build
+  script:
+    - cd backend && npm ci && npm run build
+    - cd ../frontend && npm ci && npm run build:fast
+  artifacts:
+    paths: [backend/dist, frontend/dist]

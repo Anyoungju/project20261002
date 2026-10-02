@@ -1,0 +1,17 @@
+# 비밀정보 — 커밋 금지
+.env
+.env.local
+**/.env
+Intent-Plan.md
+Intent-Plan-backup.md
+
+# 빌드·의존성·산출물
+node_modules/
+dist/
+coverage/
+storage/
+logs/
+test-results/
+playwright-report/
+*.log
+.DS_Store
