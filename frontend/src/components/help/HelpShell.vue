@@ -91,8 +91,6 @@ function go(id: string) {
 }
 .toc-title {
   font: var(--t-label);
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
   color: var(--muted);
   margin-bottom: var(--s-xs);
 }

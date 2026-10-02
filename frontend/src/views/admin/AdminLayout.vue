@@ -59,7 +59,6 @@ const tabs = computed(() => TABS.filter((t) => session.can(t.perm)));
   margin-bottom: -1px;
   color: var(--muted);
   font: var(--t-nav);
-  letter-spacing: 0.3px;
   text-decoration: none;
 }
 .tab:hover {

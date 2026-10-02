@@ -1,55 +1,79 @@
 /* =====================================================================
-   Buildcare AI 디자인 토큰 — Design/스타일가이드.html §10 CSS 토큰 그대로.
+   Buildcare AI 디자인 토큰 v2 — Design/스타일가이드.html · Design/assets/buildcare-ui.css 와 같은 값.
+   방향: 현장 점검·유지관리 업무 도구 (Field-first · Explainable AI · Say the state). 근거: Design/UX_리뷰_Buildcare AI.md
    화면·컴포넌트는 hex 를 직접 쓰지 않고 이 변수만 참조한다.
+   v1 토큰 이름(--hairline · --surface-card · --success-text 등)은 화면 호환을 위해 유지하고 값만 v2 로 바꿨다.
    ===================================================================== */
 :root {
-  /* Brand & Accent — 액션 컬러는 블루 하나 */
+  color-scheme: light;
+
+  /* Action — 액션 컬러는 블루 하나(버튼·링크·선택 표시에만) */
   --primary: #1c69d4;
-  --primary-active: #0653b6;
-  --primary-disabled: #d6d6d6;
-  /* Text & Hairline */
-  --ink: #262626;
-  --body: #3c3c3c;
-  --body-strong: #1a1a1a;
-  --muted: #6b6b6b;
-  --muted-soft: #9a9a9a;
-  --hairline: #e6e6e6;
-  --hairline-strong: #cccccc;
+  --primary-active: #0f53b3;
+  --primary-soft: #eaf1fc;
+  --primary-disabled: #d5dbe3;
+  --on-primary: #ffffff;
+
+  /* Neutral — 차가운 슬레이트 (도면·콘크리트 톤) */
+  --ink: #18212b; /* 16.3:1 */
+  --body: #354150; /* 10.4:1 */
+  --body-strong: #18212b;
+  --muted: #5c6878; /* 5.7:1 */
+  --muted-soft: #8a95a3; /* 장식 전용 — 글자 금지 */
+  --hairline: #dfe4ea;
+  --hairline-strong: #c3cbd5;
+
   /* Surface */
   --canvas: #ffffff;
-  --surface-soft: #f7f7f7;
-  --surface-card: #fafafa;
-  --surface-strong: #ebebeb;
-  --surface-dark: #1a2129;
-  --surface-dark-elevated: #262e38;
-  --on-primary: #ffffff;
+  --surface-soft: #f4f6f8;
+  --surface-card: #f8f9fb;
+  --surface-strong: #eceff3;
+  --surface-dark: #18212b;
+  --surface-dark-elevated: #243040;
   --on-dark: #ffffff;
-  --on-dark-soft: #bbbbbb;
-  /* M 트라이컬러 — 장식 구분선 전용, CTA 금지 */
-  --m-blue-light: #0066b1;
+  --on-dark-soft: #b8c2ce;
+
+  /* v1 트라이컬러 자리 — v2 에서는 장식 없이 액션색으로 수렴 */
+  --m-blue-light: #1c69d4;
   --m-blue-dark: #1c69d4;
-  --m-red: #e22718;
-  /* Semantic — 하자 위험도 상태에만 */
+  --m-red: #dc2626;
+
+  /* Risk scale — 하자 위험도 상태에만. 막대·도형 색 */
   --success: #22c55e;
   --warning: #f59e0b;
   --error: #dc2626;
+  /* 위험도 글자색(바탕 위 4.5:1 이상) · 바탕색 */
+  --success-text: #136c35;
+  --warning-text: #8a4b05;
+  --error-text: #b42318;
+  --success-tint: #e9f6ee;
+  --warning-tint: #fff5e1;
+  --error-tint: #fdeeec;
 
-  /* Semantic 글자색: 흰 바탕 명암 4.5:1 확보용(색만으로 구분하지 않으며 글자·형태와 함께 쓴다) */
-  --success-text: #15803d;
-  --warning-text: #b45309;
-  --error-text: #b91c1c;
-  --success-tint: #f0fdf4;
-  --warning-tint: #fffbeb;
-  --error-tint: #fef2f2;
+  /* Provenance — 누가 말했나 (AI · 현장 · 전문가) */
+  --src-ai: #4338ca;
+  --src-ai-tint: #eef0ff;
+  --src-ai-line: #c7cbfa;
+  --src-expert: #0f6b5c;
+  --src-expert-tint: #e6f4f1;
+  --src-expert-line: #b3ddd4;
 
-  --font: 'Inter', 'Noto Sans KR', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; /* 700 · 400 · 300 */
+  --font:
+    'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif; /* 400 · 600 · 700 */
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  /* 형태: 0px 직각이 기본, 원형은 아이콘 버튼·아바타만 */
+  /* 형태 — 누를 수 있는 것은 작게 둥글린다 */
   --r-none: 0;
+  --r-xs: 4px; /* 상태 태그 · 칩 */
+  --r-sm: 6px; /* 버튼 · 입력 */
+  --r-md: 10px; /* 카드 · 패널 */
   --r-full: 9999px;
 
-  /* 간격: 8px 기반 */
+  /* 포커스 · 떠 있는 바 */
+  --focus-ring: 0 0 0 3px rgba(28, 105, 212, 0.35);
+  --shadow-float: 0 -1px 0 #dfe4ea, 0 -6px 16px rgba(16, 24, 40, 0.06);
+
+  /* 간격: 4px 기반 */
   --s-xxs: 4px;
   --s-xs: 8px;
   --s-sm: 12px;
@@ -57,32 +81,33 @@
   --s-lg: 24px;
   --s-xl: 32px;
   --s-xxl: 48px;
-  --s-section: 80px;
+  --s-section: 56px;
 
-  --max: 1440px;
+  --max: 1280px;
   --touch: 48px;
+  --touch-field: 52px;
 
-  /* Type scale (스타일가이드 §02) */
-  --t-display-xl: 700 64px/1.05 var(--font);
-  --t-display-lg: 700 48px/1.1 var(--font);
-  --t-display-md: 700 32px/1.15 var(--font);
-  --t-display-sm: 700 24px/1.25 var(--font);
-  --t-title-lg: 700 20px/1.3 var(--font);
-  --t-title-md: 700 18px/1.4 var(--font);
-  --t-title-sm: 700 16px/1.4 var(--font);
-  --t-body-md: 300 16px/1.55 var(--font);
-  --t-body-sm: 300 14px/1.55 var(--font);
-  --t-caption: 400 12px/1.4 var(--font);
-  --t-label: 700 13px/1.3 var(--font);
-  --t-button: 700 14px/1 var(--font);
-  --t-nav: 400 14px/1.4 var(--font);
+  /* Type scale — 업무 도구 밀도(대형 마케팅 제목 없음), 본문 400 */
+  --t-display-xl: 700 36px/1.22 var(--font);
+  --t-display-lg: 700 30px/1.25 var(--font);
+  --t-display-md: 700 24px/1.3 var(--font);
+  --t-display-sm: 700 20px/1.35 var(--font);
+  --t-title-lg: 700 19px/1.35 var(--font);
+  --t-title-md: 600 17px/1.45 var(--font);
+  --t-title-sm: 600 16px/1.45 var(--font);
+  --t-body-md: 400 16px/1.6 var(--font);
+  --t-body-sm: 400 14px/1.55 var(--font);
+  --t-caption: 500 12px/1.4 var(--font);
+  --t-label: 600 13px/1.35 var(--font);
+  --t-button: 600 15px/1.2 var(--font);
+  --t-nav: 500 14px/1.4 var(--font);
 }
 
 @media (max-width: 767px) {
   :root {
-    --t-display-xl: 700 40px/1.05 var(--font);
-    --t-display-lg: 700 32px/1.1 var(--font);
-    --t-display-md: 700 26px/1.15 var(--font);
-    --s-section: 48px;
+    --t-display-xl: 700 28px/1.25 var(--font);
+    --t-display-lg: 700 24px/1.3 var(--font);
+    --t-display-md: 700 21px/1.3 var(--font);
+    --s-section: 40px;
   }
 }

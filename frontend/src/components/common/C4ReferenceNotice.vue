@@ -26,13 +26,12 @@ const TITLE = { analysis: '1차 참고용', priority: '참고용', share: '확�
 <style scoped>
 .notice {
   background: var(--surface-soft);
-  border-top: 2px solid var(--ink);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
   padding: var(--s-md) var(--s-lg);
 }
 .notice-title {
   font: var(--t-label);
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
   color: var(--ink);
   display: flex;
   align-items: center;
@@ -41,7 +40,6 @@ const TITLE = { analysis: '1차 참고용', priority: '참고용', share: '확�
 }
 .notice-title .sub {
   font: var(--t-caption);
-  letter-spacing: 0.5px;
   text-transform: none;
   color: var(--muted);
 }
@@ -57,7 +55,6 @@ const TITLE = { analysis: '1차 참고용', priority: '참고용', share: '확�
   font: var(--t-caption);
   color: var(--muted);
   margin-top: var(--s-xs);
-  letter-spacing: 0.5px;
 }
 @media print {
   .notice {

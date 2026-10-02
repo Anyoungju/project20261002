@@ -1,4 +1,4 @@
-/* 스타일가이드 원칙: 밝은 캔버스 · 단일 블루 CTA · 0px 직각 · 그림자 없음 · 700/400/300 굵기만 · 제목 자간 음수 금지 */
+/* 스타일가이드 v2 원칙: 현장 우선 · 단일 블루 CTA · 위험도 색은 상태 전용 · 그림자 없음 · 400/600/700 굵기 · 모서리는 토큰(--r-xs/sm/md)으로만 */
 *,
 *::before,
 *::after {
@@ -17,7 +17,7 @@ body {
   /* 한국어는 어절 단위로 줄바꿈 */
   word-break: keep-all;
   overflow-wrap: break-word;
-  background: var(--canvas);
+  background: var(--surface-soft);
   color: var(--body);
   font: var(--t-body-md);
   -webkit-font-smoothing: antialiased;
@@ -73,13 +73,12 @@ b {
 }
 small {
   font: var(--t-caption);
-  letter-spacing: 0.5px;
   color: var(--muted);
 }
 
 /* 포커스 — 키보드 도달(FR-101) */
 :focus-visible {
-  outline: 2px solid var(--ink);
+  outline: 3px solid var(--primary);
   outline-offset: 2px;
 }
 
@@ -120,13 +119,10 @@ small {
 }
 .caption {
   font: var(--t-caption);
-  letter-spacing: 0.5px;
   color: var(--muted);
 }
 .label-upper {
   font: var(--t-label);
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
 }
 .muted {
   color: var(--muted);
@@ -163,8 +159,6 @@ small {
 .eyebrow,
 .page-head .eyebrow {
   font: var(--t-label);
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
   color: var(--muted);
   margin-bottom: var(--s-xs);
 }
@@ -222,14 +216,18 @@ small {
 .panel {
   background: var(--canvas);
   border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
   padding: var(--s-lg);
 }
 .panel-soft {
-  background: var(--surface-soft);
+  background: var(--surface-strong);
+  border-radius: var(--r-md);
   padding: var(--s-lg);
 }
 .panel-card {
-  background: var(--surface-card);
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
   padding: var(--s-lg);
 }
 @media (max-width: 767px) {
@@ -272,7 +270,6 @@ small {
 .field .hint {
   font: var(--t-caption);
   color: var(--muted);
-  letter-spacing: 0.5px;
 }
 .field .error-text {
   font: var(--t-body-sm);
@@ -290,6 +287,7 @@ small {
   min-height: var(--touch);
   padding: 13px 16px;
   border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-sm);
   background: var(--canvas);
   color: var(--ink);
   font: var(--t-body-md);
@@ -313,8 +311,8 @@ small {
 .select:focus,
 .textarea:focus {
   outline: none;
-  border-color: var(--ink);
-  box-shadow: inset 0 0 0 1px var(--ink);
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
 }
 .input[aria-invalid='true'],
 .select[aria-invalid='true'],
@@ -342,6 +340,7 @@ small {
   min-height: var(--touch);
   padding: 0 var(--s-md);
   border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-sm);
   background: var(--canvas);
   color: var(--ink);
   font: var(--t-body-sm);
@@ -356,13 +355,14 @@ small {
   height: 1px;
 }
 .choice:has(input:checked) {
+  background: var(--primary-soft);
   border: 2px solid var(--primary);
   padding: 0 calc(var(--s-md) - 1px);
   color: var(--ink);
   font-weight: 700;
 }
 .choice:has(input:focus-visible) {
-  outline: 2px solid var(--ink);
+  outline: 3px solid var(--primary);
   outline-offset: 2px;
 }
 .choice.check-row {
@@ -374,6 +374,7 @@ small {
   width: 20px;
   height: 20px;
   border: 2px solid var(--hairline-strong);
+  border-radius: var(--r-xs);
   flex: none;
   display: grid;
   place-items: center;
@@ -403,9 +404,8 @@ small {
 }
 .table th {
   font: var(--t-label);
-  letter-spacing: 1px;
-  text-transform: uppercase;
   color: var(--muted);
+  background: var(--surface-soft);
   text-align: left;
   padding: var(--s-sm);
   border-bottom: 1px solid var(--hairline-strong);
@@ -440,7 +440,9 @@ small {
 /* 빈 상태 */
 .empty {
   padding: var(--s-xl) var(--s-lg);
-  background: var(--surface-soft);
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--r-md);
+  background: var(--canvas);
   color: var(--muted);
   font: var(--t-body-sm);
   text-align: center;
@@ -466,6 +468,7 @@ small {
   z-index: 5;
   background: var(--canvas);
   border-top: 1px solid var(--hairline);
+  box-shadow: var(--shadow-float);
   padding: var(--s-sm) 0;
   margin-top: var(--s-lg);
 }
@@ -473,6 +476,7 @@ small {
 /* 스켈레톤 로딩 */
 .skeleton {
   background: var(--surface-strong);
+  border-radius: var(--r-xs);
   min-height: 20px;
   animation: pulse 1.4s ease-in-out infinite;
 }
@@ -496,4 +500,37 @@ small {
   body {
     font-size: 12pt;
   }
+}
+
+/* ---------------------------------------------------------- v2 형태 (스타일가이드 v2 §04)
+   컴포넌트 scoped 스타일은 모서리를 지정하지 않으므로(전역 리셋 0) 여기서 역할별로 한 번에 준다. */
+.alert,
+.retry,
+.c7,
+.drop,
+.thumb,
+.pv,
+.photo-thumb {
+  border-radius: var(--r-sm);
+  overflow: hidden;
+}
+.c7,
+.drop {
+  overflow: visible;
+}
+.tile,
+.hcard,
+.c6,
+.sheet {
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.mobile-trigger,
+.sheet-close,
+.toggle,
+.rm {
+  border-radius: var(--r-sm);
+}
+.chip {
+  border-radius: var(--r-full);
 }

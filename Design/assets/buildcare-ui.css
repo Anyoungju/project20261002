@@ -192,7 +192,7 @@
 .gate-in { padding: var(--s4) var(--s5); display: grid; gap: var(--s2); }
 .gate-title { display: flex; gap: var(--s2); align-items: flex-start; font-size: 15px; font-weight: 700; color: var(--ink); }
 .gate-title .ic { color: var(--risk-bar); margin-top: 1px; }
-.gate-code { margin-left: auto; font: 700 11px/22px var(--mono); padding: 0 6px; border-radius: var(--r-xs); background: var(--risk-bg); color: var(--risk); }
+.gate-code { flex: none; white-space: nowrap; margin-left: auto; font: 700 11px/22px var(--mono); padding: 0 6px; border-radius: var(--r-xs); background: var(--risk-bg); color: var(--risk); }
 .gate-meta { display: flex; gap: var(--s4); flex-wrap: wrap; font-size: 13px; color: var(--muted); }
 .gate-meta b { color: var(--body); font-weight: 600; }
 .gate.is-pending { border-color: var(--line-strong); } .gate.is-pending::before { background: var(--warn-bar); }

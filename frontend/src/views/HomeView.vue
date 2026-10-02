@@ -285,14 +285,14 @@ const toneLabel = (t: Todo['tone']) => (t === 'danger' ? '급해요' : t === 'wa
     <template v-else>
       <section class="hero">
         <div class="container hero-inner">
-          <BrandMark :size="48" on-dark />
-          <h1 class="display-xl hero-title">사진 한 장으로 시작하는<br />건물 관리</h1>
+          <BrandMark :size="44" />
+          <h1 class="display-lg hero-title">사진 한 장으로 시작하는<br />건물 관리</h1>
           <p class="hero-text">
             균열·누수·결로 사진을 올리면 가능한 원인과 대응방안을 바로 알려 드려요. 로그인 없이 무료로 3번 써 볼 수 있어요.
           </p>
           <div class="row">
             <BaseButton to="/analysis">무료로 사진 분석하기</BaseButton>
-            <BaseButton variant="on-dark" to="/login">로그인</BaseButton>
+            <BaseButton variant="secondary" to="/login">로그인</BaseButton>
           </div>
         </div>
       </section>
@@ -360,8 +360,9 @@ const toneLabel = (t: Todo['tone']) => (t === 'danger' ? '급해요' : t === 'wa
 
 <style scoped>
 .hero {
-  background: var(--surface-dark);
-  color: var(--on-dark);
+  background: var(--canvas);
+  color: var(--body);
+  border-bottom: 1px solid var(--hairline);
 }
 .hero-inner {
   padding-top: var(--s-section);
@@ -371,11 +372,12 @@ const toneLabel = (t: Todo['tone']) => (t === 'danger' ? '급해요' : t === 'wa
   gap: var(--s-lg);
 }
 .hero-title {
-  color: var(--on-dark);
+  color: var(--ink);
+  text-wrap: balance;
 }
 .hero-text {
   font: var(--t-body-md);
-  color: var(--on-dark-soft);
+  color: var(--body);
   max-width: 640px;
 }
 .section {
@@ -389,7 +391,8 @@ const toneLabel = (t: Todo['tone']) => (t === 'danger' ? '급해요' : t === 'wa
   flex-direction: column;
   gap: var(--s-xs);
   padding: var(--s-lg);
-  border-top: 2px solid var(--ink);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
   background: var(--canvas);
 }
 .num {
@@ -397,8 +400,9 @@ const toneLabel = (t: Todo['tone']) => (t === 'danger' ? '급해요' : t === 'wa
   height: 40px;
   display: grid;
   place-items: center;
-  background: var(--primary);
-  color: var(--on-primary);
+  border-radius: var(--r-sm);
+  background: var(--primary-soft);
+  color: var(--primary-active);
   font: var(--t-title-md);
   margin-bottom: var(--s-xs);
 }
@@ -412,7 +416,9 @@ const toneLabel = (t: Todo['tone']) => (t === 'danger' ? '급해요' : t === 'wa
   height: 100%;
   min-height: 160px;
   padding: var(--s-lg);
-  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  background: var(--canvas);
   color: var(--body);
   text-decoration: none;
 }
@@ -426,8 +432,6 @@ const toneLabel = (t: Todo['tone']) => (t === 'danger' ? '급해요' : t === 'wa
 .more {
   margin-top: auto;
   font: var(--t-label);
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
   color: var(--primary);
   display: inline-flex;
   align-items: center;
@@ -444,6 +448,7 @@ const toneLabel = (t: Todo['tone']) => (t === 'danger' ? '급해요' : t === 'wa
   padding: var(--s-lg);
   border: 1px solid var(--hairline);
   border-top: 4px solid var(--hairline-strong);
+  border-radius: var(--r-md);
   background: var(--canvas);
 }
 .todo > :last-child {
@@ -472,8 +477,9 @@ const toneLabel = (t: Todo['tone']) => (t === 'danger' ? '급해요' : t === 'wa
   color: var(--muted);
 }
 .trust {
-  background: var(--surface-soft);
-  border-left: 4px solid var(--ink);
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
   padding: var(--s-lg);
 }
 .trust ul {

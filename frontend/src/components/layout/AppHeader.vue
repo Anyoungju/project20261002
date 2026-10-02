@@ -160,7 +160,6 @@ const isActive = (to: string) => route.path === to || route.path.startsWith(to +
   align-items: center;
   min-height: 64px;
   font: var(--t-nav);
-  letter-spacing: 0.3px;
   color: var(--body);
   border-bottom: 2px solid transparent;
   white-space: nowrap;
@@ -235,7 +234,6 @@ const isActive = (to: string) => route.path === to || route.path.startsWith(to +
   background: var(--primary);
   color: var(--on-primary);
   font: var(--t-button);
-  letter-spacing: 0.5px;
   text-decoration: none;
 }
 .help-link {

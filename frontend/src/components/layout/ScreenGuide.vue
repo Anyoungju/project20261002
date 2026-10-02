@@ -246,7 +246,6 @@ function toggle() {
   align-items: center;
   min-height: 40px;
   font: var(--t-label);
-  letter-spacing: 0.5px;
 }
 .tip b {
   margin-right: var(--s-xs);

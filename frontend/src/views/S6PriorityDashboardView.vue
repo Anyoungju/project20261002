@@ -514,8 +514,9 @@ onMounted(async () => {
 
 <style scoped>
 .scope-rail {
-  background: var(--surface-dark);
-  color: var(--on-dark);
+  background: var(--canvas);
+  color: var(--body);
+  border-bottom: 1px solid var(--hairline);
   font: var(--t-body-sm);
 }
 .rail-inner {
@@ -528,11 +529,11 @@ onMounted(async () => {
   padding-bottom: var(--s-xs);
 }
 .scope-rail .sep {
-  color: var(--on-dark-soft);
+  color: var(--muted-soft);
   margin-right: var(--s-xxs);
 }
 .scope-rail .alert b {
-  color: var(--warning);
+  color: var(--warning-text);
 }
 .specs {
   margin-bottom: var(--s-xl);
@@ -612,6 +613,7 @@ onMounted(async () => {
   height: 40px;
   display: grid;
   place-items: center;
+  border-radius: var(--r-sm);
   background: var(--ink);
   color: var(--on-dark);
   font: var(--t-title-sm);

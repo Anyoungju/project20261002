@@ -38,7 +38,6 @@ const emit = defineEmits<{ 'update:modelValue': [string] }>();
   background: none;
   color: var(--muted);
   font: var(--t-nav);
-  letter-spacing: 0.3px;
   cursor: pointer;
 }
 .tab[aria-selected='true'] {

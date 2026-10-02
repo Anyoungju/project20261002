@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/** 스타일가이드 Buttons — primary(단일 블루) · secondary · text-link(UPPERCASE·1.5px·›) · on-dark. 0px 직각, 높이 48 */
+/** 스타일가이드 v2 Buttons — primary(단일 블루) · secondary · text-link(›) · on-dark · ghost. 모서리 --r-sm, 높이 48 */
 import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
 
@@ -54,11 +54,10 @@ function onClick(e: MouseEvent) {
   gap: var(--s-xs);
   min-height: var(--touch);
   min-width: var(--touch);
-  padding: 14px var(--s-xl);
+  padding: 12px var(--s-lg);
   border: 0;
-  border-radius: var(--r-none);
+  border-radius: var(--r-sm);
   font: var(--t-button);
-  letter-spacing: 0.5px;
   cursor: pointer;
   text-decoration: none;
   white-space: nowrap;
@@ -76,6 +75,7 @@ function onClick(e: MouseEvent) {
   background: var(--primary);
   color: var(--on-primary);
 }
+.btn-primary:hover,
 .btn-primary:active {
   background: var(--primary-active);
 }
@@ -84,12 +84,13 @@ function onClick(e: MouseEvent) {
   color: var(--ink);
   border: 1px solid var(--hairline-strong);
 }
+.btn-secondary:hover,
 .btn-secondary:active {
   background: var(--surface-soft);
 }
 .btn-ghost {
   background: transparent;
-  color: var(--ink);
+  color: var(--primary);
   border: 1px solid transparent;
   padding-left: var(--s-sm);
   padding-right: var(--s-sm);
@@ -104,17 +105,16 @@ function onClick(e: MouseEvent) {
   color: var(--primary);
   padding: 0 var(--s-xxs);
   font: var(--t-label);
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
 }
 .chev {
   font-size: 16px;
   line-height: 1;
 }
 .is-disabled,
+.is-disabled:hover,
 .is-disabled:active {
   background: var(--primary-disabled);
-  color: var(--muted);
+  color: var(--body);
   border-color: var(--primary-disabled);
   cursor: not-allowed;
 }

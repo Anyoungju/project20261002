@@ -75,6 +75,7 @@ const to = computed(() => ({
 .risk {
   padding: var(--s-md) var(--s-lg);
   border-left: 4px solid;
+  border-radius: var(--r-md);
 }
 .t-ok {
   border-color: var(--success);

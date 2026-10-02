@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Buildcare AI 화면 프로토타입</title>
+<meta name="description" content="스타일가이드 v2 를 SD_02 화면 S1~S8 에 적용한 클릭형 프로토타입">
+<link rel="stylesheet" href="assets/buildcare-ui.css">
+<style>
+  body { margin: 0; }
+  /* ---- 프로토타입 셸 (제품 UI 아님) ---- */
+  .proto-bar { position: sticky; top: 0; z-index: 20; background: var(--surface-dark); color: #c9d1db; }
+  .proto-bar .in { max-width: 1440px; margin: 0 auto; padding: 10px 20px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .proto-bar .ttl { color: #fff; font-weight: 700; font-size: 14px; white-space: nowrap; }
+  .proto-bar .ttl small { color: #8f9aa8; font-weight: 500; margin-left: 6px; }
+  .proto-nav { display: flex; gap: 4px; flex-wrap: wrap; }
+  .proto-nav button { border: 0; background: transparent; color: #c9d1db; font-size: 13px; padding: 7px 10px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+  .proto-nav button b { font: 600 11px var(--mono); color: #7f8b99; margin-right: 4px; }
+  .proto-nav button[aria-selected="true"] { background: rgba(255,255,255,.12); color: #fff; }
+  .proto-nav button[aria-selected="true"] b { color: #9ec2f5; }
+  .proto-bar a { color: #9ec2f5; font-size: 12px; margin-left: auto; }
+  .stage { max-width: 1440px; margin: 0 auto; padding: 24px 20px 64px; }
+  .screen { display: none; } .screen.on { display: block; }
+  .screen-meta { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; font-size: 13px; color: var(--muted); }
+  .screen-meta b { color: var(--ink); font-size: 15px; }
+  .why { margin-top: 16px; padding: 14px 16px; border: 1px dashed var(--line-strong); border-radius: var(--r-md); background: var(--canvas); font-size: 13px; }
+  .why h4 { margin: 0 0 6px; font-size: 13px; color: var(--primary); }
+  .why ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+  .state-switch { display: inline-flex; gap: 4px; background: var(--canvas); border: 1px solid var(--line); border-radius: 8px; padding: 3px; }
+  .state-switch button { border: 0; background: transparent; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; }
+  .state-switch button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+
+  /* ---- 데스크톱 앱 프레임 ---- */
+  .app { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 720px; background: var(--surface-soft); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .app-side { background: var(--canvas); border-right: 1px solid var(--line); padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; }
+  .app-brand { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--ink); padding: 4px 8px 16px; }
+  .logo { width: 28px; height: 28px; border-radius: 7px; background: var(--primary); display: grid; place-items: center; }
+  .logo svg { width: 16px; height: 16px; stroke: #fff; fill: none; stroke-width: 2; }
+  .app-side a { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--body); text-decoration: none; }
+  .app-side a.on { background: var(--primary-soft); color: var(--primary-active); font-weight: 700; }
+  .app-side a .badge { margin-left: auto; font-size: 11px; font-weight: 700; background: var(--warn-bg); color: var(--warn); padding: 1px 7px; border-radius: 999px; }
+  .app-side .who { margin-top: auto; padding: 12px 10px 4px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+  .app-side .who b { display: block; color: var(--ink); font-size: 13px; }
+  .app-main { min-width: 0; display: flex; flex-direction: column; }
+  .app-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 16px 24px; background: var(--canvas); border-bottom: 1px solid var(--line); }
+  .app-body { padding: 20px 24px 28px; display: grid; gap: 16px; align-content: start; }
+  .crumb { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+
+  /* ---- 모바일 프레임 ---- */
+  .mobile-wrap { display: grid; grid-template-columns: 390px minmax(0, 1fr); gap: 32px; align-items: start; }
+  .phone { width: 390px; height: 800px; border: 10px solid #111820; border-radius: 44px; overflow: hidden; background: var(--surface-soft); display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(16,24,40,.18); }
+  .phone-status { height: 34px; flex: none; display: flex; justify-content: space-between; align-items: center; padding: 0 22px; font-size: 12px; font-weight: 700; color: var(--ink); background: var(--canvas); }
+  .phone-head { flex: none; display: flex; align-items: center; gap: 10px; padding: 8px 14px 12px; background: var(--canvas); border-bottom: 1px solid var(--line); }
+  .phone-head .back { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 8px; color: var(--ink); }
+  .phone-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+  .phone-body .pad { padding: 14px; display: grid; gap: 14px; }
+  .phone .bc-mobile { font-size: 16px; }
+  .phone-tabbar { flex: none; display: grid; grid-template-columns: repeat(3, 1fr); background: var(--canvas); border-top: 1px solid var(--line); }
+  .phone-tabbar a { display: grid; justify-items: center; gap: 2px; padding: 8px 0 10px; font-size: 11px; font-weight: 600; color: var(--muted); text-decoration: none; }
+  .phone-tabbar a.on { color: var(--primary); }
+  .sec-label { font-size: 12px; font-weight: 700; color: var(--muted); display: flex; justify-content: space-between; }
+
+  .task { display: grid; grid-template-columns: 4px 1fr; background: var(--canvas); border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; }
+  .task::before { content: ""; background: var(--line-strong); }
+  .task.late::before { background: var(--warn-bar); } .task.is-req::before { background: var(--risk-bar); }
+  .task-in { padding: 12px 14px; display: grid; gap: 6px; }
+  .task-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+  .task .t-h3 { font-size: 16px; }
+
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .col-head { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+  .kv { display: grid; grid-template-columns: 96px 1fr; gap: 6px 12px; font-size: 14px; }
+  .kv dt { color: var(--muted); } .kv dd { margin: 0; color: var(--ink); }
+  .diff { background: #fff4c2; border-radius: 3px; padding: 0 3px; }
+  .verdict-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .verdict-row .btn[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  .cluster { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--canvas); }
+  .cluster .cnt { width: 52px; height: 52px; border-radius: 10px; background: var(--risk-bg); color: var(--risk); display: grid; place-items: center; font-size: 20px; font-weight: 700; line-height: 1; }
+  .cluster .cnt small { display: block; font-size: 10px; font-weight: 600; }
+  .dots { display: flex; gap: 4px; margin-top: 6px; } .dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--risk-bar); }
+
+  .rank { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; background: var(--ink); color: #fff; font-weight: 700; font-size: 14px; }
+  .reasons { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .reasons span { font-size: 12px; color: var(--body); background: var(--surface-soft); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; }
+
+  .cand { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--canvas); cursor: pointer; }
+  .cand[aria-checked="true"] { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); background: var(--primary-soft); }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--surface-sunken); display: grid; place-items: center; color: var(--muted); }
+  .share-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 14px; }
+  .share-list li { display: flex; gap: 8px; align-items: center; }
+  .share-list .ic { color: var(--ok); width: 16px; height: 16px; }
+  .share-list li.no .ic { color: var(--muted-soft); } .share-list li.no { color: var(--muted); }
+  .fee { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0; border-top: 1px solid var(--line); }
+  .fee b { font-size: 20px; color: var(--ink); }
+
+  .plan { display: grid; gap: 10px; padding: 18px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--canvas); cursor: pointer; }
+  .plan[aria-checked="true"] { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
+  .plan .price { font-size: 24px; font-weight: 700; color: var(--ink); }
+  .plan ul { margin: 0; padding-left: 18px; font-size: 14px; display: grid; gap: 4px; }
+
+  .guide { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .guide div { display: grid; gap: 4px; padding: 12px; border-radius: var(--r-sm); background: var(--surface-soft); font-size: 13px; }
+  .guide b { color: var(--ink); font-size: 13px; }
+  .drop { display: grid; place-items: center; gap: 8px; padding: 28px; border: 1.5px dashed var(--line-strong); border-radius: var(--r-md); background: var(--canvas); text-align: center; color: var(--muted); font-size: 14px; }
+  .drop .btn-row { justify-content: center; }
+  .grid-2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .todo { display: grid; gap: 10px; }
+  .todo > div { display: grid; grid-template-columns: 92px 1fr; gap: 10px; font-size: 14px; }
+  .todo .k { font-size: 12px; font-weight: 700; color: var(--muted); padding-top: 2px; }
+  .cause { display: grid; grid-template-columns: 24px 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); font-size: 14px; }
+  .cause:first-child { border-top: 0; }
+  .cause .n { width: 24px; height: 24px; border-radius: 6px; background: var(--surface-sunken); display: grid; place-items: center; font-size: 12px; font-weight: 700; color: var(--ink); }
+  .ok-banner { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: var(--r-sm); background: var(--ok-bg); color: var(--ok); font-size: 14px; }
+  .ok-banner b { color: var(--ink); }
+  .hidden { display: none !important; }
+
+  @media (max-width: 1100px) {
+    .mobile-wrap { grid-template-columns: 1fr; justify-items: center; }
+    .grid-2, .split { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 760px) {
+    .app { grid-template-columns: 1fr; } .app-side { display: none; }
+    .app-body, .app-head { padding-inline: 16px; }
+    .phone { width: 100%; max-width: 390px; }
+    .guide, .three { grid-template-columns: 1fr; }
+    .cluster { grid-template-columns: auto 1fr; } .cluster > .btn-row { grid-column: 1 / -1; } .cluster > .btn-row .btn { flex: 1; }
+    .app-head .select { min-width: 0 !important; width: 100% !important; }
+    .stage { padding-inline: 12px; }
+  }
+</style>
+</head>
+<body class="bc">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><path d="M5 21V4h10v17M15 9h4v12M3 21h18M8 8h4M8 12h4M8 16h4"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/></symbol>
+  <symbol id="i-block" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.5 6.5a4 4 0 0 0-5.3 5.3L3 18l3 3 6.2-6.2a4 4 0 0 0 5.3-5.3l-2.5 2.5-2.5-.5-.5-2.5z"/></symbol>
+  <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-cloud-off" viewBox="0 0 24 24"><path d="M3 3l18 18M8 7.3A6 6 0 0 1 18 11a4 4 0 0 1 2.4 6.6M17 19H7a5 5 0 0 1-2.7-9.2"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7M8 20v-6h8v6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+</svg>
+
+<header class="proto-bar">
+  <div class="in">
+    <div class="ttl">Buildcare AI<small>화면 프로토타입 · 스타일가이드 v2 적용</small></div>
+    <div class="proto-nav" role="tablist" aria-label="화면 선택">
+      <button role="tab" data-go="s2" aria-selected="true"><b>S2</b>하자 분석</button>
+      <button role="tab" data-go="s1" aria-selected="false"><b>S1</b>이용권</button>
+      <button role="tab" data-go="s7b" aria-selected="false"><b>S7B</b>내 배정 점검</button>
+      <button role="tab" data-go="s3" aria-selected="false"><b>S3</b>현장 기록</button>
+      <button role="tab" data-go="s4" aria-selected="false"><b>S4</b>전문가 검증</button>
+      <button role="tab" data-go="s5" aria-selected="false"><b>S5</b>건물 이력</button>
+      <button role="tab" data-go="s6" aria-selected="false"><b>S6</b>우선순위</button>
+      <button role="tab" data-go="s8a" aria-selected="false"><b>S8A</b>전문가 요청</button>
+    </div>
+    <a href="스타일가이드.html">스타일가이드 →</a>
+  </div>
+</header>
+
+<div class="stage">
+
+<!-- ================= S2 하자 사진 AI 분석 ================= -->
+<section class="screen on" id="s2">
+  <div class="screen-meta"><b>S2 하자 사진 AI 분석</b><span>일반 사용자 · 시설관리자 · P2 · UC1</span>
+    <span class="state-switch" role="group" aria-label="화면 상태"><button data-s2="input" aria-pressed="false">입력</button><button data-s2="block" aria-pressed="false">품질 차단 G3</button><button data-s2="result" aria-pressed="true">결과 · 위험 권고</button></span></div>
+  <div class="app">
+    <aside class="app-side">
+      <div class="app-brand"><div class="logo"><svg viewBox="0 0 24 24"><path d="M5 21V4h10v17M15 9h4v12M3 21h18"/></svg></div>Buildcare AI</div>
+      <a class="on" href="#"><svg class="ic"><use href="#i-camera"/></svg>하자 분석</a>
+      <a href="#"><svg class="ic"><use href="#i-list"/></svg>내 분석 결과</a>
+      <a href="#"><svg class="ic"><use href="#i-lock"/></svg>이용권</a>
+      <div class="who"><b>김** 님</b>무료 체험 1회 남음</div>
+    </aside>
+    <div class="app-main">
+      <nav class="rail" aria-label="하자 건 진행"><span class="rail-id">하자 건 D-2026-0142</span><ol id="s2rail">
+        <li class="done"><span class="dot"><svg class="ic ic-sm"><use href="#i-check"/></svg></span>분석</li>
+        <li class="na"><span class="dot"></span>현장 기록 <em>해당 없음</em></li>
+        <li class="na"><span class="dot"></span>전문가 검증 <em>해당 없음</em></li>
+        <li class="current" aria-current="step"><span class="dot">4</span>조치</li></ol></nav>
+
+      <!-- 입력 / 차단 상태 -->
+      <div class="app-body hidden" id="s2-input">
+        <div><div class="crumb">하자 분석</div><h1 class="t-h1">하자 사진으로 원인 알아보기</h1></div>
+        <div class="grid-2">
+          <div class="card"><div class="card-body stack" style="display:grid;gap:16px">
+            <div class="guide" aria-label="촬영 가이드">
+              <div><b>전체가 보이게</b>하자 전체와 주변 벽·바닥이 함께 나오게</div>
+              <div><b>30cm ~ 1m 거리</b>하자가 화면 절반 정도를 채우게</div>
+              <div><b>초점과 밝기</b>그림자 없이, 흔들리지 않게</div>
+            </div>
+            <div id="s2-photo-empty" class="drop"><svg class="ic" style="width:28px;height:28px"><use href="#i-camera"/></svg>하자 사진을 올려 주세요 · 최대 5장<div class="btn-row"><button class="btn btn-primary"><svg class="ic"><use href="#i-camera"/></svg>촬영하기</button><button class="btn btn-secondary"><svg class="ic"><use href="#i-plus"/></svg>앨범에서 선택</button></div></div>
+            <div id="s2-photo-bad" class="hidden" style="display:grid;grid-template-columns:160px 1fr;gap:14px;align-items:start">
+              <div class="ph" style="filter:blur(2.5px)"><span class="ph-cap">외벽균열_3F.jpg</span></div>
+              <div class="gate" role="alert"><div class="gate-in">
+                <div class="gate-title"><svg class="ic"><use href="#i-block"/></svg>사진 초점이 맞지 않아 분석할 수 없습니다<span class="gate-code">G3</span></div>
+                <div class="gate-meta"><span>푸는 사람 <b>본인</b></span><span>이용권은 차감되지 않았습니다</span></div>
+                <div class="btn-row"><button class="btn btn-secondary"><svg class="ic"><use href="#i-camera"/></svg>사진 다시 올리기</button></div>
+              </div></div>
+            </div>
+            <div class="field"><label for="desc">간단한 설명 <span class="hint">선택</span></label><textarea id="desc" class="textarea" placeholder="예) 3층 북측 외벽 · 장마 뒤 균열이 길어짐">3층 북측 외벽 · 장마 뒤 균열이 길어짐</textarea><span class="hint">위치 · 언제부터 · 변화를 쓰면 원인 추정이 정확해집니다</span></div>
+            <div>
+              <button class="btn btn-primary btn-lg" id="s2-submit" aria-describedby="s2-reason"><svg class="ic"><use href="#i-sparkle"/></svg>분석 요청</button>
+              <div class="reason hidden" id="s2-reason"><svg class="ic"><use href="#i-block"/></svg>사진 초점이 맞지 않아 분석할 수 없습니다</div>
+            </div>
+          </div></div>
+          <div class="stack" style="display:grid;gap:12px">
+            <div class="card"><div class="card-body" style="display:grid;gap:6px"><div class="t-label">이용권</div><div class="t-h2 num">무료 체험 1회 남음</div><div class="t-small t-muted">분석이 끝난 건만 차감됩니다. 품질 차단·분석 실패는 차감되지 않습니다.</div></div></div>
+            <div class="notice"><svg class="ic"><use href="#i-info"/></svg><div><b>결과는 1차 참고용입니다</b> — 사진만으로 하는 판단이므로 법적·구조적 안전 판정을 대체하지 않습니다.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 결과 상태 -->
+      <div class="app-body" id="s2-result">
+        <div class="app-head" style="padding:0;border:0;background:none"><div><div class="crumb">하자 분석 · 결과</div><h1 class="t-h1">3층 북측 외벽 · 균열</h1><div class="t-caption num">촬영 2026-10-01 14:22 · 분석 14:23</div></div>
+          <div class="btn-row"><button class="btn btn-secondary">새 사진 분석</button></div></div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-body" style="display:grid;gap:16px">
+              <div class="notice"><svg class="ic"><use href="#i-info"/></svg><div><b>1차 참고용</b> — 이미지 기반 AI 분석으로, 법적·구조적 안전 판정을 대체하지 않습니다. 위험 가능성이 판정되면 자격 있는 전문가의 점검을 받으세요.</div></div>
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="src src-ai"><svg class="ic ic-sm"><use href="#i-sparkle"/></svg>AI 1차 분석</span><span class="tag tag-risk">위험 가능성</span><span class="conf" data-level="2"><span class="conf-bars"><i></i><i></i><i></i></span>신뢰도 보통</span></div>
+              <p class="t-h3" style="font-size:17px">균열이 길고 비스듬해, 단순 건조수축 균열인지 구조 균열인지 구별이 필요합니다.</p>
+              <div><div class="t-label" style="margin-bottom:4px">가능한 원인</div>
+                <div class="cause"><span class="n">1</span><span>외벽 건조수축 균열</span><span class="tag tag-plain tag-na">가능성 높음</span></div>
+                <div class="cause"><span class="n">2</span><span>빗물 침투로 인한 균열 확장</span><span class="tag tag-plain tag-na">가능성 있음</span></div>
+                <div class="cause"><span class="n">3</span><span>구조적 거동(부등침하 등)</span><span class="tag tag-plain tag-na">배제 못 함</span></div>
+              </div>
+              <div><div class="t-label" style="margin-bottom:8px">할 일</div>
+                <div class="todo">
+                  <div><span class="k">지금</span><span>균열 끝에 날짜를 표시하고 같은 위치·거리에서 다시 찍어 두세요.</span></div>
+                  <div><span class="k">지켜보기</span><span>2주 안에 길이나 폭이 늘면 방수 보수를 검토하세요.</span></div>
+                  <div><span class="k">전문가</span><span>폭 0.3mm 이상이거나 사선 방향이면 구조 점검을 받으세요.</span></div>
+                </div></div>
+            </div>
+          </div>
+          <div style="display:grid;gap:12px">
+            <div class="ph mark" role="img" aria-label="균열 - 3층 북측 외벽 - 2026-10-01"><span class="ph-cap">AI 가 본 부위</span></div>
+            <div class="advice advice-risk"><div class="advice-in"><div class="advice-text"><b>전문가 점검을 권합니다</b><span>구조적 손상 가능성을 사진만으로 배제할 수 없습니다. 관리사무소나 건물관리자에게 이 결과를 전달하세요.</span></div></div></div>
+            <div class="card"><div class="card-body" style="display:grid;gap:10px"><div class="t-label">이 결과 보관하기</div><p class="t-small t-muted">지금은 비회원입니다. 로그인하면 이 기기에서 받은 결과가 계정에 연결됩니다(90일 보관).</p><button class="btn btn-secondary">로그인하고 결과 보관</button></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="why"><h4>적용한 UX</h4><ul>
+    <li><b>촬영 가이드 먼저</b> — 품질 차단(G3)을 업로드 전에 줄입니다. 차단돼도 "이용권은 차감되지 않았습니다"를 함께 말합니다.</li>
+    <li><b>판정 → 원인 → 할 일 → 고지</b> — 한 줄 판정을 먼저, 원인은 "가능성" 순위, 할 일은 지금·지켜보기·전문가 세 갈래.</li>
+    <li><b>신뢰도는 말과 막대로</b>, AI 문장에는 인디고 출처 표지. 일반 사용자 권고에는 요청 버튼이 없습니다(FR-121). 비회원 결과 보관 안내(FR-120a).</li>
+  </ul></div>
+</section>
+
+<!-- ================= S1 이용권 ================= -->
+<section class="screen" id="s1">
+  <div class="screen-meta"><b>S1 분석 이용권 구매</b><span>일반 사용자 · P1 · UC2</span></div>
+  <div class="app" style="min-height:560px">
+    <aside class="app-side">
+      <div class="app-brand"><div class="logo"><svg viewBox="0 0 24 24"><path d="M5 21V4h10v17M15 9h4v12M3 21h18"/></svg></div>Buildcare AI</div>
+      <a href="#"><svg class="ic"><use href="#i-camera"/></svg>하자 분석</a>
+      <a href="#"><svg class="ic"><use href="#i-list"/></svg>내 분석 결과</a>
+      <a class="on" href="#"><svg class="ic"><use href="#i-lock"/></svg>이용권</a>
+      <div class="who"><b>김** 님</b>무료 체험 0회 남음</div>
+    </aside>
+    <div class="app-main"><div class="app-body" style="max-width:860px">
+      <div class="gate is-pending" role="region"><div class="gate-in">
+        <div class="gate-title"><svg class="ic"><use href="#i-block"/></svg>분석 이용권이 없습니다 - 무료 체험을 모두 사용했습니다<span class="gate-code">G2</span></div>
+        <div class="gate-meta"><span>푸는 사람 <b>본인</b></span><span>결제가 끝나면 올려 둔 사진으로 바로 분석합니다</span></div>
+      </div></div>
+      <h1 class="t-h1">이용권 선택</h1>
+      <div class="three" style="grid-template-columns:1fr 1fr" role="radiogroup" aria-label="요금제" id="plans">
+        <div class="plan" role="radio" aria-checked="false" tabindex="0"><div class="t-label">건별 분석</div><div class="price num">○,○○○원 <span class="t-small t-muted">/ 1건</span></div><ul><li>필요할 때 한 건씩</li><li>분석이 끝난 건만 차감</li></ul></div>
+        <div class="plan" role="radio" aria-checked="true" tabindex="0"><div class="t-label">월 구독 <span class="tag tag-info" style="margin-left:6px">자주 쓰면 유리</span></div><div class="price num">○○,○○○원 <span class="t-small t-muted">/ 월</span></div><ul><li>기간 안에 횟수 제한 없이</li><li>다음 결제일 전에 언제든 해지</li></ul></div>
+      </div>
+      <div class="card"><div class="card-body" style="display:grid;gap:8px">
+        <div class="fee" style="border:0;padding:0"><span>결제 금액</span><b class="num">○○,○○○원</b></div>
+        <p class="t-small t-muted">금액은 운영자가 정합니다(명세 가정). 결제 승인 전에는 이용권이 생기지 않습니다.</p>
+        <button class="btn btn-primary btn-lg">결제하고 분석 계속하기</button>
+      </div></div>
+    </div></div>
+  </div>
+  <div class="why"><h4>적용한 UX</h4><ul><li><b>돈은 확정 버튼보다 먼저</b>(SD_02 U6) — 금액·조건·차감 규칙을 결제 버튼 위에 둡니다.</li><li>G2 차단 문구는 S2 와 글자까지 같고, 결제 뒤 "올려 둔 사진으로 바로" 복귀합니다(UC2 기본흐름 6).</li></ul></div>
+</section>
+
+<!-- ================= S7B 내 배정 점검 (모바일) ================= -->
+<section class="screen" id="s7b">
+  <div class="screen-meta"><b>S7B 내 배정 점검</b><span>시설관리자 · 모바일 · P7 · P0 · UC6</span></div>
+  <div class="mobile-wrap">
+    <div class="phone">
+      <div class="phone-status"><span>9:41</span><span>LTE</span></div>
+      <div class="phone-head"><div><div class="t-h2">내 배정 점검</div><div class="t-caption">한빛마을 3단지 · 박** 시설관리자</div></div></div>
+      <div class="rail" style="padding:10px 14px"><div class="rail-count"><span>배정 <b>4</b></span><span class="warn">지연 <b>1</b></span><span>추가 자료 요청 <b>1</b></span></div></div>
+      <div class="phone-body bc-mobile"><div class="pad">
+        <div class="sec-label"><span>먼저 처리</span></div>
+        <div class="task is-req"><div class="task-in">
+          <div class="task-top"><span class="tag tag-risk">추가 자료 요청</span><span class="t-caption">G6</span></div>
+          <div class="t-h3">104동 3층 북측 외벽 · 균열</div>
+          <div class="t-small">전문가가 "균열 폭을 잴 수 있게 자를 대고 다시 찍어 달라"고 요청했습니다.</div>
+          <button class="btn btn-primary btn-lg btn-block" data-go="s3"><svg class="ic"><use href="#i-camera"/></svg>재촬영 사진 올리기</button>
+        </div></div>
+        <div class="task late"><div class="task-in">
+          <div class="task-top"><span class="tag tag-warn">지연 3일</span><span class="t-caption num">기한 09-30</span></div>
+          <div class="t-h3">105동 지하주차장 · 정기점검(분기)</div>
+          <div class="t-small t-muted">점검 항목 4개 · 누수 반복 구역 포함</div>
+          <button class="btn btn-secondary btn-lg btn-block" data-go="s3"><svg class="ic"><use href="#i-wrench"/></svg>현장 기록 시작</button>
+        </div></div>
+        <div class="sec-label"><span>이번 주</span><span class="num">2건</span></div>
+        <div class="task"><div class="task-in">
+          <div class="task-top"><span class="tag tag-info">도래</span><span class="t-caption num">기한 10-06</span></div>
+          <div class="t-h3">104동 옥상 방수층 · 정기점검(반기)</div>
+        </div></div>
+        <div class="task"><div class="task-in">
+          <div class="task-top"><span class="tag tag-plain tag-na">예정</span><span class="t-caption num">기한 10-09</span></div>
+          <div class="t-h3">106동 외벽 전체 · 정기점검(연)</div>
+        </div></div>
+      </div></div>
+      <div class="phone-tabbar"><a class="on" href="#"><svg class="ic"><use href="#i-list"/></svg>배정 점검</a><a href="#"><svg class="ic"><use href="#i-wrench"/></svg>현장 기록</a><a href="#"><svg class="ic"><use href="#i-camera"/></svg>하자 분석</a></div>
+    </div>
+    <div class="why" style="margin:0"><h4>적용한 UX — CMMS 작업 큐</h4><ul>
+      <li><b>기한별 큐</b>: 추가 자료 요청·지연 → 이번 주 → 예정. 왼쪽 막대 색과 태그 글자가 같은 상태를 두 번 말합니다.</li>
+      <li>지연은 "지연"이 아니라 <b>"지연 3일"</b> — 얼마나 늦었는지가 우선순위를 정합니다(P0 · `[부정적 영향]` 점검 지연).</li>
+      <li>카드마다 <b>다음 행동 버튼 하나</b>, 52px 전체 폭. 하단 탭은 역할 메뉴 3개뿐(SD_02 §2-2).</li>
+      <li>G6 추가 자료 요청이 전문가 화면이 아니라 <b>자료를 가진 사람의 화면</b>에 뜹니다(SD_02 §12 G6).</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- ================= S3 현장 기록 (모바일) ================= -->
+<section class="screen" id="s3">
+  <div class="screen-meta"><b>S3 현장 점검·보수 기록</b><span>시설관리자 · 모바일 · P3 · UC3</span>
+    <span class="t-small">보수 결과를 고르면 G5 가 풀립니다 →</span></div>
+  <div class="mobile-wrap">
+    <div class="phone">
+      <div class="phone-status"><span>9:41</span><span>LTE</span></div>
+      <div class="phone-head"><a class="back" href="#" data-go="s7b" aria-label="뒤로"><svg class="ic"><use href="#i-back"/></svg></a><div><div class="t-h3">현장 기록</div><div class="t-caption num">D-2026-0142 · 104동</div></div></div>
+      <nav class="rail" style="padding:8px 14px" aria-label="하자 건 진행"><ol>
+        <li class="done"><span class="dot"><svg class="ic ic-sm"><use href="#i-check"/></svg></span>분석</li>
+        <li class="blocked" id="s3-step" aria-current="step"><span class="dot">!</span><span id="s3-steptext">현장 기록 · 차단 G5</span></li>
+        <li><span class="dot">3</span>검증</li></ol></nav>
+      <div class="phone-body bc-mobile">
+        <div class="pad" id="s3-form">
+          <div class="card"><div class="card-body" style="display:grid;gap:8px;padding:12px 14px">
+            <div class="sec-label"><span>연결된 AI 분석</span><button class="btn btn-ghost" style="min-height:32px;padding:0 6px">변경</button></div>
+            <div class="tl-row"><span class="src src-ai"><svg class="ic ic-sm"><use href="#i-sparkle"/></svg>AI</span><span class="t-small">외벽 건조수축 균열 가능성 높음</span></div>
+          </div></div>
+          <div class="sec-label"><span>필수 항목</span><span id="s3-count">3 / 4</span></div>
+          <div class="field"><label>건물 유형</label><input class="input" value="공동주택" readonly></div>
+          <div class="field"><label for="loc">위치 <span class="req">필수</span></label><input id="loc" class="input" value="3층 북측 외벽"></div>
+          <div class="field"><label for="dtype">하자 종류 <span class="req">필수</span></label><select id="dtype" class="select"><option>균열</option><option>누수</option><option>결로</option></select></div>
+          <div class="field" id="rr-field"><span class="label" id="rr-l">보수 결과 <span class="req">필수</span></span>
+            <div class="seg is-error" id="rr" role="radiogroup" aria-labelledby="rr-l">
+              <label><input type="radio" name="s3rr" value="done"><span>보수 완료</span></label>
+              <label><input type="radio" name="s3rr" value="pending"><span>미완료 · 보수 예정</span></label>
+            </div><span class="err-text" id="rr-err">보수 결과를 골라 주세요 — "미완료"도 값입니다</span></div>
+          <div class="sec-label"><span>현장 사진 · 점검 내용</span><span>2장</span></div>
+          <div class="three" style="grid-template-columns:repeat(3,1fr)"><div class="ph"><span class="ph-cap">근경</span></div><div class="ph leak"><span class="ph-cap">원경</span></div><button class="ph-add" type="button"><svg class="ic"><use href="#i-camera"/></svg>추가</button></div>
+          <div class="field"><label for="memo">점검 내용</label><textarea id="memo" class="textarea" style="min-height:76px">폭 0.4mm · 길이 1.2m · 사선 방향, 우측 끝에서 백화 있음</textarea></div>
+          <div class="field"><span class="label">AI 결과와 현장 판정</span>
+            <div class="seg" role="radiogroup" aria-label="AI 일치 여부"><label><input type="radio" name="match"><span>일치</span></label><label><input type="radio" name="match" checked><span>다름</span></label></div>
+            <span class="hint">"다름"으로 저장하면 전문가 검증 대기 목록에 자동 등록됩니다</span></div>
+        </div>
+        <div class="pad hidden" id="s3-done">
+          <div class="ok-banner"><svg class="ic"><use href="#i-check"/></svg><div><b>기록을 저장했습니다</b><br>균열로 분류됐고, AI 결과와 달라 <b>전문가 검증 대상</b>으로 등록됐습니다.</div></div>
+          <button class="btn btn-secondary btn-lg btn-block" data-go="s7b">배정 점검으로 돌아가기</button>
+        </div>
+        <div class="bottombar" id="s3-bar">
+          <div class="save-state"><svg class="ic"><use href="#i-save"/></svg>이 기기에 임시 저장됨 · 09:41</div>
+          <div class="gate" id="s3-gate" style="margin-bottom:10px" role="region" aria-labelledby="g5t"><div class="gate-in" style="padding:10px 12px;gap:4px">
+            <div class="gate-title" id="g5t" style="font-size:14px"><svg class="ic"><use href="#i-block"/></svg>필수 항목이 비어 있어 저장할 수 없습니다 - 보수 결과<span class="gate-code">G5</span></div>
+          </div></div>
+          <button class="btn btn-primary btn-lg btn-block" id="s3-save" aria-disabled="true" aria-describedby="g5t"><svg class="ic"><use href="#i-save"/></svg>기록 저장</button>
+        </div>
+      </div>
+    </div>
+    <div class="why" style="margin:0"><h4>적용한 UX — 펀치리스트 · 현장 입력</h4><ul>
+      <li><b>필수 4항목을 맨 위에</b>, 남은 개수(3 / 4)를 머리에. 건물 유형은 건물의 속성이라 읽기 전용(SD_03 §19-1 피드백 반영).</li>
+      <li>보수 결과는 <b>세그먼트 명시값</b> — "미완료"를 골라야 저장됩니다. 빈칸과 구분됩니다(SD_02 U7).</li>
+      <li>저장 버튼과 <b>저장 상태가 엄지 위치에 고정</b>. 이유는 버튼 바로 위 G5 블록에, 글자까지 같은 문장으로.</li>
+      <li>"다름"이 저장 후 어디로 가는지 <b>미리 말합니다</b>(UC3 E2 → P4).</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- ================= S4 전문가 검증 ================= -->
+<section class="screen" id="s4">
+  <div class="screen-meta"><b>S4 전문가 검증</b><span>전문가 · P4 · UC4</span><span class="t-small">"판정할 수 없음"을 눌러 G6 을 확인해 보세요</span></div>
+  <div class="app">
+    <aside class="app-side">
+      <div class="app-brand"><div class="logo"><svg viewBox="0 0 24 24"><path d="M5 21V4h10v17M15 9h4v12M3 21h18"/></svg></div>Buildcare AI</div>
+      <a class="on" href="#"><svg class="ic"><use href="#i-shield"/></svg>검증 대기<span class="badge">5</span></a>
+      <a href="#"><svg class="ic"><use href="#i-user"/></svg>점검 요청</a>
+      <a href="#"><svg class="ic"><use href="#i-chart"/></svg>AI 일치율</a>
+      <div class="who"><b>이** 전문가</b>구조 · 방수</div>
+    </aside>
+    <div class="app-main">
+      <nav class="rail" aria-label="하자 건 진행"><span class="rail-id">하자 건 D-2026-0142</span><ol>
+        <li class="done"><span class="dot"><svg class="ic ic-sm"><use href="#i-check"/></svg></span>분석</li>
+        <li class="done"><span class="dot"><svg class="ic ic-sm"><use href="#i-check"/></svg></span>현장 기록</li>
+        <li class="current" id="s4-step" aria-current="step"><span class="dot">3</span><span id="s4-steptext">전문가 검증</span></li>
+        <li><span class="dot">4</span>조치</li></ol></nav>
+      <div class="app-body">
+        <div class="app-head" style="padding:0;border:0;background:none"><div><div class="crumb">검증 대기 5건 · 1 / 5</div><h1 class="t-h1">104동 3층 북측 외벽 · 균열</h1></div>
+          <div class="chips"><button class="chip" aria-pressed="true">전체 <span class="count">5</span></button><button class="chip" aria-pressed="false">균열 <span class="count">3</span></button><button class="chip" aria-pressed="false">누수 <span class="count">2</span></button></div></div>
+        <div class="split">
+          <div class="card"><div class="card-body">
+            <div class="col-head"><span class="src src-ai"><svg class="ic ic-sm"><use href="#i-sparkle"/></svg>AI 1차 분석</span><span class="t-caption">10-01 14:23</span></div>
+            <div class="ph mark" style="margin-bottom:14px"><span class="ph-cap">사용자 사진</span></div>
+            <dl class="kv"><dt>원인 1</dt><dd><span class="diff">외벽 건조수축 균열</span></dd><dt>원인 2</dt><dd>빗물 침투로 인한 확장</dd><dt>위험도</dt><dd><span class="tag tag-risk">위험 가능성</span></dd><dt>신뢰도</dt><dd><span class="conf" data-level="2"><span class="conf-bars"><i></i><i></i><i></i></span>보통</span></dd></dl>
+          </div></div>
+          <div class="card"><div class="card-body">
+            <div class="col-head"><span class="src src-field"><svg class="ic ic-sm"><use href="#i-wrench"/></svg>현장 기록</span><span class="t-caption">09-28 · 박**</span></div>
+            <div class="ph leak" style="margin-bottom:14px"><span class="ph-cap">현장 사진 2장</span></div>
+            <dl class="kv"><dt>현장 판정</dt><dd><span class="diff">사선 균열 · 백화 동반</span></dd><dt>측정</dt><dd class="num">폭 0.4mm · 길이 1.2m</dd><dt>보수 결과</dt><dd><span class="tag tag-warn">미완료 · 보수 예정</span></dd><dt>AI 일치</dt><dd>다름 — 그래서 이 목록에 왔습니다</dd></dl>
+          </div></div>
+        </div>
+        <div class="card" id="s4-verdict"><div class="card-body" style="display:grid;gap:14px">
+          <div class="t-h2">판정</div>
+          <div class="verdict-row" role="group" aria-label="판정"><button class="btn btn-secondary" aria-pressed="false" data-v>AI 와 일치</button><button class="btn btn-secondary" aria-pressed="true" data-v>AI 와 불일치</button></div>
+          <div class="field"><label for="op">전문가 의견 <span class="hint">불일치면 필수</span></label><textarea id="op" class="textarea">사선 방향과 백화로 보아 구조 균열 가능성을 배제할 수 없음. 우측 끝 폭 측정 필요.</textarea></div>
+          <label class="check"><input type="checkbox" checked><span><b>위험이 큽니다</b> — 건물관리자에게 전문가 점검 필요를 통지합니다</span></label>
+          <div class="btn-row" style="justify-content:space-between"><button class="btn btn-ghost" id="s4-cant">판정할 수 없음 · 추가 자료 요청</button><button class="btn btn-primary btn-lg"><svg class="ic"><use href="#i-check"/></svg>검증 완료</button></div>
+        </div></div>
+        <div class="gate hidden" id="s4-gate" role="region" aria-labelledby="g6t"><div class="gate-in">
+          <div class="gate-title" id="g6t"><svg class="ic"><use href="#i-block"/></svg>자료가 부족해 판정할 수 없습니다<span class="gate-code">G6</span></div>
+          <div class="gate-meta"><span>푸는 사람 <b>기록한 시설관리자 박**</b></span><span>이 건은 AI 일치율 계산에서 빠집니다</span></div>
+          <div class="field"><label for="req">요청 내용</label><input id="req" class="input" value="균열 폭을 잴 수 있게 자를 대고 근접 촬영해 주세요"></div>
+          <div class="btn-row"><button class="btn btn-primary">추가 자료 요청 보내기</button><button class="btn btn-ghost" id="s4-back">판정으로 돌아가기</button><span class="reason" style="margin:0"><svg class="ic"><use href="#i-lock"/></svg>[검증 완료]는 자료가 올 때까지 잠깁니다</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+  <div class="why"><h4>적용한 UX — 판독·리뷰 화면</h4><ul>
+    <li><b>나란히 비교</b>: 왼쪽 AI, 오른쪽 현장. 서로 다른 부분은 노란 형광으로 짚습니다.</li>
+    <li><b>판정 불가는 다른 줄, 다른 모양</b>의 버튼(SD_02 U4 · SD_03 D6). 누르면 판정 영역이 G6 블록으로 바뀌고, 신뢰도 지표에서 빠진다고 말합니다.</li>
+    <li>판정은 덮어쓰지 않고 판본으로 쌓입니다 — 화면에는 "누가 언제"가 항상 보입니다.</li>
+  </ul></div>
+</section>
+
+<!-- ================= S5 건물 이력 ================= -->
+<section class="screen" id="s5">
+  <div class="screen-meta"><b>S5 건물 이력</b><span>건물관리자 · P5 · UC5</span></div>
+  <div class="app">
+    <aside class="app-side">
+      <div class="app-brand"><div class="logo"><svg viewBox="0 0 24 24"><path d="M5 21V4h10v17M15 9h4v12M3 21h18"/></svg></div>Buildcare AI</div>
+      <a class="on" href="#"><svg class="ic"><use href="#i-history"/></svg>건물 이력</a>
+      <a href="#"><svg class="ic"><use href="#i-calendar"/></svg>정기점검<span class="badge">지연 1</span></a>
+      <a href="#"><svg class="ic"><use href="#i-shield"/></svg>전문가 점검 요청</a>
+      <div class="who"><b>최** 건물관리자</b>한빛마을 3단지 · 3개 동</div>
+    </aside>
+    <div class="app-main">
+      <div class="rail"><span class="rail-id">한빛마을 3단지 104동</span><div class="rail-count"><span>이력 <b>12</b>건</span><span class="warn">정기점검 지연 <b>1</b>건</span><span>전문가 연결 대기 <b>1</b>건</span></div></div>
+      <div class="app-body">
+        <div class="app-head" style="padding:0;border:0;background:none">
+          <div><div class="crumb">건물 이력</div><h1 class="t-h1">104동 유지관리 이력</h1></div>
+          <select class="select" style="width:auto;min-width:240px" aria-label="건물"><option>한빛마을 3단지 104동</option><option>105동</option><option>106동</option></select>
+        </div>
+        <div class="sourcebar" role="status"><span><svg class="ic ic-sm"><use href="#i-cloud-off"/></svg><b>외부 이력 미반영</b> 건물관리시스템 연동 실패 · 10-03 09:00 — 내부 기록은 모두 보입니다</span></div>
+        <div class="tabs" role="tablist" id="s5tabs"><button class="tab" role="tab" aria-selected="false" data-t="tl">시간순 이력</button><button class="tab" role="tab" aria-selected="true" data-t="rp">반복 하자 <span class="tag tag-risk" style="margin-left:4px">2</span></button></div>
+        <div id="s5-rp" style="display:grid;gap:12px">
+          <div class="cluster"><div class="cnt">3<small>회</small></div><div><div class="t-h3">3층 북측 외벽 · 균열</div><div class="t-small t-muted">2025-07 · 2026-03 · 2026-09 — 장마철마다 재발, 마지막 보수 미완료</div><div class="dots" aria-hidden="true"><i></i><i></i><i></i></div></div><div class="btn-row"><button class="btn btn-secondary">점검 계획</button><button class="btn btn-primary" data-go="s8a">전문가 연결</button></div></div>
+          <div class="cluster"><div class="cnt" style="background:var(--warn-bg);color:var(--warn)">2<small>회</small></div><div><div class="t-h3">지하 1층 주차장 · 누수</div><div class="t-small t-muted">2026-02 · 2026-08 — 같은 신축줄눈 위치</div><div class="dots" aria-hidden="true"><i style="background:var(--warn-bar)"></i><i style="background:var(--warn-bar)"></i></div></div><div class="btn-row"><button class="btn btn-secondary">점검 계획</button><button class="btn btn-secondary">전문가 연결</button></div></div>
+          <div class="gate" role="region"><div class="gate-in">
+            <div class="gate-title"><svg class="ic"><use href="#i-block"/></svg>반복 하자를 판단할 이력이 부족합니다 · 옥상 · 결로<span class="gate-code">G7</span></div>
+            <div class="gate-meta"><span>현재 <b>1건</b> · 기준 2건</span><span>푸는 사람 <b>시설관리자 · 전문가</b> (기록 축적)</span></div>
+            <div class="btn-row"><button class="btn btn-secondary">정기점검 배정으로 기록 요청 보내기</button></div>
+          </div></div>
+        </div>
+        <div id="s5-tl" class="card hidden"><div class="card-body" style="padding-top:4px"><ul class="tl">
+          <li class="tl-month">2026년 10월</li>
+          <li class="tl-item"><span class="tl-date">10-01</span><div class="tl-main"><div class="tl-row"><span class="src src-ai">AI</span><b class="t-h3" style="font-size:15px">3층 북측 외벽 · 균열</b><span class="tag tag-risk">위험 가능성</span></div><span class="t-small t-muted">건조수축 균열 가능성 높음 · 전문가 점검 권고</span></div></li>
+          <li class="tl-month">2026년 9월</li>
+          <li class="tl-item"><span class="tl-date">09-28</span><div class="tl-main"><div class="tl-row"><span class="src src-field">현장</span><b class="t-h3" style="font-size:15px">3층 북측 외벽 · 균열</b><span class="tag tag-warn">미완료</span></div><span class="t-small t-muted">폭 0.4mm · 사선 · 백화 — AI 와 다름, 검증 대기</span></div></li>
+          <li class="tl-item"><span class="tl-date">09-14</span><div class="tl-main"><div class="tl-row"><span class="src src-expert">전문가</span><b class="t-h3" style="font-size:15px">지하 1층 주차장 · 누수</b><span class="tag tag-ok">AI 와 일치</span></div><span class="t-small t-muted">신축줄눈 실링 노후 · 재시공 권고 — 이**</span></div></li>
+          <li class="tl-item"><span class="tl-date">09-02</span><div class="tl-main"><div class="tl-row"><span class="src src-field">현장</span><b class="t-h3" style="font-size:15px">옥상 · 결로</b><span class="tag tag-ok">보수 완료</span></div><span class="t-small t-muted">환기구 단열 보강</span></div></li>
+        </ul></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="why"><h4>적용한 UX — 자산 이력</h4><ul>
+    <li><b>연동이 끊겨도 계속 보인다</b>: 주황 표시줄(C7)이 무엇이 빠졌는지만 말하고 화면을 막지 않습니다(U5).</li>
+    <li><b>위치로 묶은 재발 카드</b>: 재발 횟수를 큰 숫자로, 발생 시점을 한 줄로. 바로 다음 행동(점검 계획 · 전문가 연결).</li>
+    <li>이력이 부족한 위치는 패턴을 <b>그리지 않고</b> G7 블록으로 이유를 말합니다(U4). 타임라인 각 줄에는 출처 표지.</li>
+  </ul></div>
+</section>
+
+<!-- ================= S6 우선순위 ================= -->
+<section class="screen" id="s6">
+  <div class="screen-meta"><b>S6 유지관리 우선순위</b><span>기업 관리자 · 기업용 대시보드 · P6 · UC8</span></div>
+  <div class="app">
+    <aside class="app-side">
+      <div class="app-brand"><div class="logo"><svg viewBox="0 0 24 24"><path d="M5 21V4h10v17M15 9h4v12M3 21h18"/></svg></div>Buildcare AI</div>
+      <a class="on" href="#"><svg class="ic"><use href="#i-chart"/></svg>유지관리 우선순위</a>
+      <div class="who"><b>정** 기업 관리자</b>(주)한빛주택관리 · 건물 18개</div>
+    </aside>
+    <div class="app-main">
+      <div class="app-head">
+        <div><div class="crumb">기업용 관리자 대시보드</div><h1 class="t-h1">유지관리 우선순위</h1></div>
+        <div class="btn-row"><select class="select" style="width:auto" aria-label="건물 범위"><option>관리 건물 전체 (18)</option></select><select class="select" style="width:auto" aria-label="기간"><option>최근 12개월</option></select><button class="btn btn-primary">다시 산출</button></div>
+      </div>
+      <div class="app-body">
+        <div class="stats">
+          <div class="stat"><div class="v">18</div><div class="k">관리 건물</div></div>
+          <div class="stat risk"><div class="v">5</div><div class="k">위험 가능성 미조치</div></div>
+          <div class="stat warn"><div class="v">7</div><div class="k">반복 하자 위치</div></div>
+          <div class="stat"><div class="v">2</div><div class="k">정기점검 지연</div></div>
+        </div>
+        <div class="sourcebar" role="status"><span><b>권한 밖 건물 2개</b> 제외</span><span><b>신뢰도 낮음 3건</b> — 이력이 적어 순위가 바뀔 수 있습니다</span><span class="t-small">산출 2026-10-03 08:00 · 스냅숏</span></div>
+        <div class="notice"><svg class="ic"><use href="#i-info"/></svg><div><b>참고용 우선순위</b> — 축적된 이력에 근거한 추정입니다. 최종 판단과 진단 책임은 자격 있는 전문가와 관리 주체에 있습니다.</div></div>
+        <div class="card" style="overflow-x:auto"><table class="table" style="min-width:860px">
+          <thead><tr><th style="width:52px">순위</th><th>위치 · 하자</th><th>왜 이 순위인가</th><th>신뢰도</th><th>조치</th></tr></thead>
+          <tbody>
+            <tr><td><span class="rank">1</span></td><td><b class="t-h3" style="font-size:15px">104동 3층 북측 외벽 · 균열</b><div class="t-caption">한빛마을 3단지</div></td><td><div class="reasons"><span>재발 3회</span><span>위험 가능성</span><span>미조치 34일</span></div><a class="t-small" href="#" style="color:var(--primary)">근거 이력 4건</a></td><td><span class="conf" data-level="3"><span class="conf-bars"><i></i><i></i><i></i></span>높음</span></td><td><select class="select" aria-label="조치"><option>전문가 연결</option><option>정기점검</option><option>조치 없음</option></select></td></tr>
+            <tr><td><span class="rank">2</span></td><td><b class="t-h3" style="font-size:15px">201동 지하 2층 · 누수</b><div class="t-caption">한빛마을 2단지</div></td><td><div class="reasons"><span>재발 4회</span><span>주의</span><span>정기점검 지연</span></div><a class="t-small" href="#" style="color:var(--primary)">근거 이력 5건</a></td><td><span class="conf" data-level="2"><span class="conf-bars"><i></i><i></i><i></i></span>보통</span></td><td><select class="select" aria-label="조치"><option>정기점검</option><option>전문가 연결</option><option>조치 없음</option></select></td></tr>
+            <tr><td><span class="rank">3</span></td><td><b class="t-h3" style="font-size:15px">105동 지하 1층 주차장 · 누수</b><div class="t-caption">한빛마을 3단지</div></td><td><div class="reasons"><span>재발 2회</span><span>전문가 확인</span></div><a class="t-small" href="#" style="color:var(--primary)">근거 이력 3건</a></td><td><span class="conf" data-level="2"><span class="conf-bars"><i></i><i></i><i></i></span>보통</span></td><td><select class="select" aria-label="조치"><option>정기점검</option><option>전문가 연결</option><option>조치 없음</option></select></td></tr>
+            <tr><td><span class="rank" style="background:var(--muted)">4</span></td><td><b class="t-h3" style="font-size:15px">302동 옥상 · 결로</b><div class="t-caption">한빛마을 1단지</div></td><td><div class="reasons"><span>재발 2회</span></div><a class="t-small" href="#" style="color:var(--primary)">근거 이력 2건</a></td><td><span class="conf" data-level="1"><span class="conf-bars"><i></i><i></i><i></i></span>낮음</span></td><td><select class="select" aria-label="조치"><option>조치 없음</option><option>정기점검</option><option>전문가 연결</option></select></td></tr>
+          </tbody></table></div>
+      </div>
+    </div>
+  </div>
+  <div class="why"><h4>적용한 UX — 리스크 대시보드</h4><ul>
+    <li><b>순위에는 이유</b>: 재발 횟수·위험도·미조치 기간을 근거 칩으로, 근거 이력 링크로 역추적(FR-064).</li>
+    <li><b>빠진 것과 불확실한 것을 위에</b>: 제외 건물 수·신뢰도 낮음 건수·산출 시점(스냅숏)을 표 위 표시줄에(U5).</li>
+    <li>지표 타일은 4개로 제한 — 행동으로 이어지는 숫자만(미조치·반복·지연). 색은 위험한 숫자에만.</li>
+  </ul></div>
+</section>
+
+<!-- ================= S8A 전문가 점검 요청 ================= -->
+<section class="screen" id="s8a">
+  <div class="screen-meta"><b>S8A 전문가 점검 요청</b><span>건물관리자 · P8 · UC7</span><span class="t-small">동의를 체크하면 G9 가 풀립니다</span></div>
+  <div class="app">
+    <aside class="app-side">
+      <div class="app-brand"><div class="logo"><svg viewBox="0 0 24 24"><path d="M5 21V4h10v17M15 9h4v12M3 21h18"/></svg></div>Buildcare AI</div>
+      <a href="#"><svg class="ic"><use href="#i-history"/></svg>건물 이력</a>
+      <a href="#"><svg class="ic"><use href="#i-calendar"/></svg>정기점검</a>
+      <a class="on" href="#"><svg class="ic"><use href="#i-shield"/></svg>전문가 점검 요청</a>
+      <div class="who"><b>최** 건물관리자</b>한빛마을 3단지</div>
+    </aside>
+    <div class="app-main">
+      <nav class="rail" aria-label="하자 건 진행"><span class="rail-id">하자 건 D-2026-0142</span><ol>
+        <li class="done"><span class="dot"><svg class="ic ic-sm"><use href="#i-check"/></svg></span>분석</li>
+        <li class="done"><span class="dot"><svg class="ic ic-sm"><use href="#i-check"/></svg></span>현장 기록</li>
+        <li class="done"><span class="dot"><svg class="ic ic-sm"><use href="#i-check"/></svg></span>전문가 검증</li>
+        <li class="current" aria-current="step"><span class="dot">4</span>조치 · 전문가 연결</li></ol></nav>
+      <div class="app-body">
+        <div><div class="crumb">위험 통지에서 시작 · 출처 전문가 위험 판정</div><h1 class="t-h1">전문가 점검 요청</h1></div>
+        <div class="grid-2">
+          <div style="display:grid;gap:16px">
+            <div class="card"><div class="card-body" style="display:grid;gap:14px">
+              <div class="t-h2">1. 필요한 점검</div>
+              <div class="split" style="gap:12px">
+                <div class="field"><label for="sp">전문 분야</label><select id="sp" class="select"><option>구조</option><option>건축</option><option>방수</option></select></div>
+                <div class="field"><label for="dt">희망 일정</label><input id="dt" class="input num" value="10-07 ~ 10-14"></div>
+              </div>
+            </div></div>
+            <div class="card"><div class="card-body" style="display:grid;gap:10px" role="radiogroup" aria-label="전문가 후보" id="cands">
+              <div class="t-h2">2. 전문가 선택 <span class="t-small t-muted">조건에 맞는 3명</span></div>
+              <div class="cand" role="radio" aria-checked="true" tabindex="0"><div class="avatar"><svg class="ic"><use href="#i-user"/></svg></div><div><b class="t-h3" style="font-size:15px">이** 구조기술사</b><div class="t-small t-muted">구조 · 방수 · 가능일 10-08, 10-10</div></div><span class="tag tag-info">이 건 검증함</span></div>
+              <div class="cand" role="radio" aria-checked="false" tabindex="0"><div class="avatar"><svg class="ic"><use href="#i-user"/></svg></div><div><b class="t-h3" style="font-size:15px">한** 건축사</b><div class="t-small t-muted">구조 · 건축 · 가능일 10-09</div></div><span></span></div>
+              <div class="cand" role="radio" aria-checked="false" tabindex="0"><div class="avatar"><svg class="ic"><use href="#i-user"/></svg></div><div><b class="t-h3" style="font-size:15px">윤** 구조기술사</b><div class="t-small t-muted">구조 · 가능일 10-13</div></div><span></span></div>
+              <p class="t-caption">이름·연락처는 연결이 확정되면 공개됩니다.</p>
+            </div></div>
+          </div>
+          <div class="card" style="position:sticky;top:72px"><div class="card-body" style="display:grid;gap:14px">
+            <div class="t-h2">3. 보낼 것 확인</div>
+            <ul class="share-list">
+              <li><svg class="ic"><use href="#i-check"/></svg>하자 사진 3장 (분석 1 · 현장 2)</li>
+              <li><svg class="ic"><use href="#i-check"/></svg>AI 분석 결과 · 현장 기록 · 검증 의견</li>
+              <li><svg class="ic"><use href="#i-check"/></svg>건물명 · 동 · 위치(3층 북측 외벽)</li>
+              <li class="no"><svg class="ic"><use href="#i-x"/></svg>입주민 개인정보 · 다른 하자 이력</li>
+            </ul>
+            <div class="fee"><span>연결 수수료 <span class="t-caption">전문가 수락 시에만</span></span><b class="num">○○,○○○원</b></div>
+            <div class="notice" style="font-size:12px"><svg class="ic ic-sm"><use href="#i-info"/></svg><div>자료는 선택한 전문가 1명에게만 전달되며, 보낸 뒤에는 회수할 수 없습니다.</div></div>
+            <label class="check"><input type="checkbox" id="consent"><span>위 자료를 <b>이** 구조기술사</b>에게 공유하는 데 동의합니다</span></label>
+            <div>
+              <button class="btn btn-primary btn-lg btn-block" id="s8-confirm" aria-disabled="true" aria-describedby="s8-reason">요청 확정하고 보내기</button>
+              <div class="reason" id="s8-reason"><svg class="ic"><use href="#i-block"/></svg>공유 범위에 동의해야 요청을 보낼 수 있습니다 · G9</div>
+            </div>
+            <div class="gate is-pending hidden" id="s8-wait" role="region"><div class="gate-in">
+              <div class="gate-title"><svg class="ic"><use href="#i-clock"/></svg>전문가 수락 전에는 연결이 확정되지 않습니다<span class="gate-code">G10</span></div>
+              <div class="gate-meta"><span>푸는 사람 <b>이** 구조기술사</b></span><span>응답 시한 48시간</span><span>수수료 미발생</span></div>
+            </div></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="why"><h4>적용한 UX — 동의·결제 확인</h4><ul>
+    <li><b>보낼 것을 먼저 보인다</b>: 공유 항목(보내는 것 / 보내지 않는 것)과 수수료가 확정 버튼 위(SD_02 U6 · G9).</li>
+    <li>동의 문장에 <b>받는 사람 이름</b>을 넣어, 누구에게 무엇을 주는지 한 줄로 읽힙니다. 후보는 마스킹(BR-DEF-08).</li>
+    <li>확정 뒤에는 G10 대기 블록 — "수수료 미발생"을 같이 말해 불안을 줄입니다(BR-DEF-09).</li>
+  </ul></div>
+</section>
+
+</div>
+
+<script>
+  // 화면 전환
+  const tabs = [...document.querySelectorAll('.proto-nav button')];
+  function go(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id));
+    tabs.forEach(t => t.setAttribute('aria-selected', t.dataset.go === id));
+    window.scrollTo({ top: 0 });
+    try { history.replaceState(null, '', '#' + id); } catch (e) {}
+  }
+  document.addEventListener('click', e => {
+    const g = e.target.closest('[data-go]'); if (!g) return;
+    e.preventDefault(); go(g.dataset.go);
+  });
+  if (location.hash && document.getElementById(location.hash.slice(1))) { go(location.hash.slice(1)); setTimeout(() => window.scrollTo(0, 0), 50); }
+
+  // S2 상태
+  const s2 = { input: document.getElementById('s2-input'), result: document.getElementById('s2-result') };
+  const rail2 = document.getElementById('s2rail');
+  const railHTML = {
+    result: rail2.innerHTML,
+    input: '<li class="current" aria-current="step"><span class="dot">1</span>분석</li><li class="na"><span class="dot"></span>현장 기록 <em>해당 없음</em></li><li class="na"><span class="dot"></span>전문가 검증 <em>해당 없음</em></li><li><span class="dot">4</span>조치</li>',
+    block: '<li class="blocked" aria-current="step"><span class="dot">!</span>분석 · 차단 G3</li><li class="na"><span class="dot"></span>현장 기록 <em>해당 없음</em></li><li class="na"><span class="dot"></span>전문가 검증 <em>해당 없음</em></li><li><span class="dot">4</span>조치</li>'
+  };
+  document.querySelectorAll('[data-s2]').forEach(b => b.addEventListener('click', () => {
+    const st = b.dataset.s2;
+    document.querySelectorAll('[data-s2]').forEach(x => x.setAttribute('aria-pressed', x === b));
+    s2.result.classList.toggle('hidden', st !== 'result');
+    s2.input.classList.toggle('hidden', st === 'result');
+    document.getElementById('s2-photo-empty').classList.toggle('hidden', st !== 'input');
+    document.getElementById('s2-photo-bad').classList.toggle('hidden', st !== 'block');
+    document.getElementById('s2-reason').classList.toggle('hidden', st !== 'block');
+    const sb = document.getElementById('s2-submit');
+    st === 'block' ? sb.setAttribute('aria-disabled', 'true') : sb.removeAttribute('aria-disabled');
+    rail2.innerHTML = railHTML[st];
+  }));
+
+  // S3 G5
+  const rr = document.querySelectorAll('input[name="s3rr"]');
+  const save = document.getElementById('s3-save');
+  rr.forEach(r => r.addEventListener('change', () => {
+    document.getElementById('rr').classList.remove('is-error');
+    document.getElementById('rr-err').classList.add('hidden');
+    document.getElementById('s3-gate').classList.add('hidden');
+    document.getElementById('s3-count').textContent = '4 / 4';
+    save.removeAttribute('aria-disabled'); save.removeAttribute('aria-describedby');
+    const st = document.getElementById('s3-step'); st.className = 'current';
+    st.querySelector('.dot').textContent = '2'; document.getElementById('s3-steptext').textContent = '현장 기록';
+  }));
+  save.addEventListener('click', () => {
+    if (save.getAttribute('aria-disabled') === 'true') { document.getElementById('rr').scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
+    save.classList.add('is-busy'); save.innerHTML = '저장 중…';
+    setTimeout(() => {
+      document.getElementById('s3-form').classList.add('hidden');
+      document.getElementById('s3-bar').classList.add('hidden');
+      document.getElementById('s3-done').classList.remove('hidden');
+      const st = document.getElementById('s3-step'); st.className = 'done';
+      st.querySelector('.dot').innerHTML = '<svg class="ic ic-sm"><use href="#i-check"/></svg>';
+    }, 600);
+  });
+
+  // S4 판정
+  document.querySelectorAll('[data-v]').forEach(b => b.addEventListener('click', () =>
+    document.querySelectorAll('[data-v]').forEach(x => x.setAttribute('aria-pressed', x === b))));
+  const s4toggle = cant => {
+    document.getElementById('s4-verdict').classList.toggle('hidden', cant);
+    document.getElementById('s4-gate').classList.toggle('hidden', !cant);
+    const st = document.getElementById('s4-step');
+    st.className = cant ? 'blocked' : 'current';
+    st.querySelector('.dot').textContent = cant ? '!' : '3';
+    document.getElementById('s4-steptext').textContent = cant ? '전문가 검증 · 판정 불가 G6' : '전문가 검증';
+  };
+  document.getElementById('s4-cant').addEventListener('click', () => s4toggle(true));
+  document.getElementById('s4-back').addEventListener('click', () => s4toggle(false));
+
+  // S5 탭
+  document.getElementById('s5tabs').addEventListener('click', e => {
+    const t = e.target.closest('.tab'); if (!t) return;
+    document.querySelectorAll('#s5tabs .tab').forEach(x => x.setAttribute('aria-selected', x === t));
+    document.getElementById('s5-rp').classList.toggle('hidden', t.dataset.t !== 'rp');
+    document.getElementById('s5-tl').classList.toggle('hidden', t.dataset.t !== 'tl');
+  });
+
+  // 칩 · 라디오 카드
+  document.querySelectorAll('.chips').forEach(g => g.addEventListener('click', e => {
+    const c = e.target.closest('.chip'); if (!c) return;
+    g.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x === c));
+  }));
+  ['plans', 'cands'].forEach(id => {
+    const g = document.getElementById(id);
+    const pick = el => g.querySelectorAll('[role="radio"]').forEach(x => x.setAttribute('aria-checked', x === el));
+    g.addEventListener('click', e => { const r = e.target.closest('[role="radio"]'); if (r) pick(r); });
+    g.addEventListener('keydown', e => { const r = e.target.closest('[role="radio"]'); if (r && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); pick(r); } });
+  });
+
+  // S8A G9 → G10
+  const consent = document.getElementById('consent'), conf = document.getElementById('s8-confirm');
+  consent.addEventListener('change', () => {
+    consent.checked ? conf.removeAttribute('aria-disabled') : conf.setAttribute('aria-disabled', 'true');
+    document.getElementById('s8-reason').classList.toggle('hidden', consent.checked);
+  });
+  conf.addEventListener('click', () => {
+    if (conf.getAttribute('aria-disabled') === 'true') { consent.focus(); return; }
+    conf.classList.add('hidden'); consent.disabled = true;
+    document.getElementById('s8-wait').classList.remove('hidden');
+  });
+</script>
+</body>
+</html>

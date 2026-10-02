@@ -22,7 +22,6 @@ defineProps<{ value: string | number | null; label: string; tone?: 'default' | '
 }
 .l {
   font: var(--t-caption);
-  letter-spacing: 0.5px;
   color: var(--muted);
   margin-top: var(--s-xxs);
 }

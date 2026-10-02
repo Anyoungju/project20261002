@@ -62,8 +62,10 @@ function run(a: GateAction) {
 <style scoped>
 .gate {
   display: flex;
-  background: var(--error-tint);
+  background: var(--canvas);
+  border: 1px solid var(--error);
   border-left: 4px solid var(--error);
+  border-radius: var(--r-md);
   padding: var(--s-md) var(--s-lg);
   margin: var(--s-md) 0;
 }
@@ -82,8 +84,11 @@ function run(a: GateAction) {
   display: inline-block;
   margin-left: var(--s-xs);
   padding: 1px 6px;
-  border: 1px solid var(--hairline-strong);
-  color: var(--muted);
+  border: 1px solid transparent;
+  border-radius: var(--r-xs);
+  background: var(--error-tint);
+  color: var(--error-text);
+  font-family: var(--font-mono);
   font: var(--t-caption);
   vertical-align: 2px;
 }

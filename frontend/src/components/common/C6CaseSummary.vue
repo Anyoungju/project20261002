@@ -137,8 +137,6 @@ const currentVerdict = computed(() => (props.summary.verdicts ?? [])[0] ?? null)
 }
 .cell-src {
   font: var(--t-label);
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
   color: var(--muted);
 }
 .photos {

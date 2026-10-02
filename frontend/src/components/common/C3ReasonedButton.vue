@@ -67,9 +67,8 @@ function onClick(e: MouseEvent) {
   min-width: var(--touch);
   padding: 14px var(--s-xl);
   border: 0;
-  border-radius: var(--r-none);
+  border-radius: var(--r-sm);
   font: var(--t-button);
-  letter-spacing: 0.5px;
   cursor: pointer;
 }
 .block .rbtn {

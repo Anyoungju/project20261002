@@ -36,7 +36,6 @@ const emit = defineEmits<{ 'update:modelValue': [string] }>();
   color: var(--ink);
   font: var(--t-caption);
   font-size: 13px;
-  letter-spacing: 0.5px;
   cursor: pointer;
 }
 .chip[aria-pressed='true'] {

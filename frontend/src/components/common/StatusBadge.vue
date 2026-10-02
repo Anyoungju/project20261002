@@ -22,17 +22,15 @@ const shape = computed(() => SHAPE[props.tone]);
   align-items: center;
   gap: 6px;
   padding: 3px 8px;
-  border: 1px solid currentColor;
-  border-radius: var(--r-none);
+  border: 1px solid transparent;
+  border-radius: var(--r-xs);
   font: var(--t-caption);
-  font-weight: 700;
-  letter-spacing: 0.5px;
+  font-weight: 600;
   white-space: nowrap;
   line-height: 1.3;
 }
 .md {
   font: var(--t-label);
-  letter-spacing: 0.5px;
   padding: 5px 10px;
 }
 .shape {
@@ -57,11 +55,12 @@ const shape = computed(() => SHAPE[props.tone]);
 }
 .tone-na {
   color: var(--muted);
-  background: var(--canvas);
+  background: var(--surface-soft);
+  border-color: var(--hairline-strong);
   border-style: dashed;
 }
 .tone-info {
-  color: var(--primary);
-  background: var(--canvas);
+  color: var(--primary-active);
+  background: var(--primary-soft);
 }
 </style>

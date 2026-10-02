@@ -1,4 +1,4 @@
-// T150 — 스타일가이드 위반 검출: hex 직접 사용 · 500 굵기 · box-shadow · 0 외 border-radius (아이콘 버튼·아바타의 --r-full 은 허용)
+// T150 — 스타일가이드 v2 위반 검출: hex 직접 사용 · 300(Light) 굵기 · 토큰 외 box-shadow · 토큰 외 border-radius
 import fs from 'node:fs';
 import path from 'node:path';
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../src');
@@ -10,12 +10,12 @@ const files = [];
     else if (/\.(vue|css|ts)$/.test(f) && !p.endsWith('tokens.css')) files.push(p);
   }
 })(root);
-const ALLOWED_RADIUS = /^(0|0px|var\(--r-none\)|var\(--r-full\)|50%)$/;
+const ALLOWED_RADIUS = /^(0|0px|50%|var\(--r-(none|xs|sm|md|full)\))$/;
 const rules = [
   [(l) => /#[0-9a-fA-F]{3,8}\b/.test(l) && /(color|background|border|fill|stroke)\s*:/.test(l), 'hex 색상 직접 사용 — tokens.css 변수를 쓰세요'],
-  [(l) => /font-weight:\s*500\b/.test(l) || /\b500\s+\d+px\//.test(l), '500 굵기 금지(700/400/300)'],
-  [(l) => [...l.matchAll(/box-shadow:\s*([^;}]+)/g)].some((m) => !/^(none|inset\b)/.test(m[1].trim())), 'box-shadow 금지(입력 포커스 inset 만 허용)'],
-  [(l) => [...l.matchAll(/border-radius:\s*([^;}]+)/g)].some((m) => !ALLOWED_RADIUS.test(m[1].trim())), '둥근 모서리 금지(0px, 아이콘 버튼·아바타·스피너만 원형)'],
+  [(l) => /font-weight:\s*300\b/.test(l) || /\b300\s+\d+px\//.test(l), '300(Light) 굵기 금지 — 본문은 400 (v2)'],
+  [(l) => [...l.matchAll(/box-shadow:\s*([^;}]+)/g)].some((m) => !/^(none|inset\b|var\(--(focus-ring|shadow-float)\))/.test(m[1].trim())), 'box-shadow 금지(입력 포커스 inset · --focus-ring · --shadow-float 토큰만 허용)'],
+  [(l) => [...l.matchAll(/border-radius:\s*([^;}]+)/g)].some((m) => !ALLOWED_RADIUS.test(m[1].trim())), '모서리는 토큰만(--r-xs 4 · --r-sm 6 · --r-md 10 · --r-full)'],
 ];
 let bad = 0;
 for (const f of files) {

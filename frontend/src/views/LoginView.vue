@@ -144,7 +144,6 @@ function done() {
 }
 .eyebrow {
   font: var(--t-label);
-  letter-spacing: 1.5px;
 }
 .notice {
   background: var(--surface-soft);

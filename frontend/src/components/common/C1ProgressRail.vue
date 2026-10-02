@@ -70,7 +70,7 @@ const view = computed(() =>
   position: sticky;
   top: 64px;
   z-index: 20;
-  background: var(--surface-soft);
+  background: var(--canvas);
   border-bottom: 1px solid var(--hairline);
 }
 .rail-inner {
@@ -124,6 +124,8 @@ const view = computed(() =>
 .st-blocked .stage-text {
   color: var(--error-text);
   border: 1px solid var(--error);
+  border-radius: var(--r-xs);
+  background: var(--error-tint);
   padding: 2px 6px;
   font-weight: 700;
 }
